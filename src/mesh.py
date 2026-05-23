@@ -97,7 +97,6 @@ def extrude_polygon_simple(
     if polygon.is_empty or polygon.area <= 0:
         return trimesh.Trimesh()
 
-    polygon = Polygon(polygon.exterior)
     triangles = [t for t in triangulate(polygon) if polygon.contains(t.representative_point())]
     vertices: list[tuple[float, float, float]] = []
     faces: list[tuple[int, int, int]] = []
@@ -117,6 +116,7 @@ def extrude_polygon_simple(
         faces.append((top[0], top[1], top[2]))
         faces.append((bottom[2], bottom[1], bottom[0]))
 
+    # Create side walls for exterior boundary
     ring = list(polygon.exterior.coords)
     for (x1, y1), (x2, y2) in zip(ring[:-1], ring[1:]):
         t1 = vertex_id(x1, y1, top_z)
@@ -125,6 +125,17 @@ def extrude_polygon_simple(
         b2 = vertex_id(x2, y2, bottom_z)
         faces.append((t1, b1, b2))
         faces.append((t1, b2, t2))
+
+    # Create side walls for interior boundaries (holes)
+    for interior in polygon.interiors:
+        ring = list(interior.coords)
+        for (x1, y1), (x2, y2) in zip(ring[:-1], ring[1:]):
+            t1 = vertex_id(x1, y1, top_z)
+            t2 = vertex_id(x2, y2, top_z)
+            b1 = vertex_id(x1, y1, bottom_z)
+            b2 = vertex_id(x2, y2, bottom_z)
+            faces.append((t1, b1, b2))
+            faces.append((t1, b2, t2))
 
     return trimesh.Trimesh(vertices=np.array(vertices), faces=np.array(faces), process=True)
 

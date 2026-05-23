@@ -71,6 +71,33 @@ def volume(mesh: Any) -> float | None:
     return result
 
 
+def non_manifold_edge_count(mesh: Any) -> int | None:
+    """Return the number of non-manifold edges (shared by more than 2 faces)."""
+    edges_unique_inverse = _safe_getattr(mesh, "edges_unique_inverse")
+    if edges_unique_inverse is None:
+        return None
+    try:
+        edge_counts = np.bincount(edges_unique_inverse)
+        return int(np.sum(edge_counts > 2))
+    except Exception:
+        return None
+
+
+def degenerate_face_count(mesh: Any) -> int | None:
+    """Return the number of degenerate faces."""
+    nondegenerate_mask = _safe_getattr(mesh, "nondegenerate_faces")
+    if nondegenerate_mask is None:
+        return None
+    try:
+        if callable(nondegenerate_mask):
+            mask = nondegenerate_mask()
+        else:
+            mask = nondegenerate_mask
+        return int(len(getattr(mesh, "faces", ())) - np.count_nonzero(mask))
+    except Exception:
+        return None
+
+
 def mesh_summary(mesh: Any) -> dict[str, object]:
     """Return a lightweight summary for a trimesh-like mesh."""
     return {
@@ -81,6 +108,8 @@ def mesh_summary(mesh: Any) -> dict[str, object]:
         "is_watertight": is_watertight(mesh),
         "euler_number": euler_number(mesh),
         "volume": volume(mesh),
+        "non_manifold_edge_count": non_manifold_edge_count(mesh),
+        "degenerate_face_count": degenerate_face_count(mesh),
     }
 
 
@@ -89,3 +118,4 @@ def _safe_getattr(mesh: Any, name: str, default: Any = None) -> Any:
         return getattr(mesh, name, default)
     except (AttributeError, TypeError, ValueError):
         return default
+

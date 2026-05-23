@@ -39,12 +39,12 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 3 - Building Modeling
 
-- [ ] Support polygon holes.
+- [x] Support polygon holes.
 - [ ] Add footprint simplification option.
 - [x] Add building base mode selector: representative/min/mean.
 - [ ] Add sloped terrain policy for building base.
 - [ ] Add per-building diagnostics.
-- [ ] Report selected base elevation mode in summary JSON.
+- [x] Report selected base elevation mode in summary JSON.
 
 ## Phase 4 - Terrain Modeling
 
@@ -60,7 +60,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [ ] Add mesh repair command.
 - [ ] Check watertight/non-manifold edges.
 - [x] Summarize basic mesh quality: watertight status, Euler number, volume, and bounding box.
-- [ ] Add non-manifold edge and degenerate face counts.
+- [x] Add non-manifold edge and degenerate face counts.
 - [ ] Add scale option.
 - [ ] Add base plate option.
 - [ ] Add normal cleanup.
