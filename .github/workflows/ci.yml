@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Generate sample data
+        run: python scripts/create_sample_data.py
+
+      - name: Smoke test STL generation
+        run: >
+          python make_model.py
+          --area data\sample\area.geojson
+          --buildings data\sample\buildings.geojson
+          --dem data\sample\dem.tif
+          --out output\ci_sample.stl
+          --terrain-resolution 10
+          --building-base-mode representative
+          --height-field HEIGHT
+          --floor-field GRND_FLR
+          --preview
+
+      - name: Inspect sample inputs
+        run: >
+          python scripts/inspect_data.py
+          --area data\sample\area.geojson
+          --buildings data\sample\buildings.geojson
+          --dem data\sample\dem.tif
