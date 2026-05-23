@@ -44,6 +44,12 @@ The sample area is committed as GeoJSON. Generate the sample DEM and buildings:
 .\.venv\Scripts\python.exe scripts\create_sample_data.py
 ```
 
+Or run the full sample workflow:
+
+```powershell
+.\scripts\run_sample.ps1
+```
+
 Then run an end-to-end sample:
 
 ```powershell
