@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Area Selector</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --border: #d9dee7;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --danger: #b42318;
+      --shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: minmax(320px, 380px) 1fr;
+      min-height: 100%;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 22px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      z-index: 500;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .metrics {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fbfcfe;
+      font-size: 13px;
+    }
+
+    .metric strong {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 36px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      background: #fff;
+      font: 13px Arial, Helvetica, sans-serif;
+    }
+
+    .command-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button:hover {
+      border-color: #aab3c2;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #111827;
+      background: #fbfcfe;
+    }
+
+    textarea.command {
+      min-height: 150px;
+    }
+
+    .status {
+      min-height: 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    #map {
+      min-width: 0;
+      min-height: 100%;
+    }
+
+    .leaflet-container {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    @media (max-width: 860px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(420px, 1fr);
+      }
+
+      aside {
+        box-shadow: none;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div>
+      <h1>Area Selector</h1>
+      <p>Draw one polygon or rectangle, then download it as `area.geojson` for the STL generator.</p>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><span>Area</span><strong id="areaValue">0 km2</strong></div>
+      <div class="metric"><span>Vertices</span><strong id="vertexValue">0</strong></div>
+      <div class="metric"><span>CRS</span><strong>EPSG:4326</strong></div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="downloadButton" disabled>Download</button>
+      <button id="copyButton" disabled>Copy</button>
+      <button id="fitButton" disabled>Fit</button>
+      <button id="clearButton" disabled>Clear</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="command-row">
+        <label>
+          Command
+          <select id="commandTypeInput">
+            <option value="inspect">Inspect data</option>
+            <option value="model">Make model</option>
+          </select>
+        </label>
+        <label>
+          Terrain resolution
+          <input id="resolutionInput" value="10">
+        </label>
+      </div>
+      <label>
+        Area path
+        <input id="areaPathInput" value="data\areas\area.geojson">
+      </label>
+      <label>
+        Buildings path
+        <input id="buildingsPathInput" value="data\buildings\my_region_buildings.shp">
+      </label>
+      <label>
+        DEM path
+        <input id="demPathInput" value="data\dem\my_region_dem.tif">
+      </label>
+      <label>
+        Output path
+        <input id="outPathInput" value="output\my_area.stl">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="copyCommandButton">Copy Command</button>
+      <button id="resetCommandButton">Reset Paths</button>
+    </div>
+
+    <textarea class="command" id="commandOutput" spellcheck="false" readonly></textarea>
+
+    <div class="status" id="status">Use the draw tools on the map.</div>
+    <textarea id="geojsonOutput" spellcheck="false" readonly></textarea>
+  </aside>
+
+  <main id="map"></main>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script>
+    const map = L.map("map", {
+      center: [37.5665, 126.9780],
+      zoom: 14,
+      preferCanvas: true,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polyline: false,
+        circle: false,
+        circlemarker: false,
+        marker: false,
+        polygon: {
+          allowIntersection: false,
+          showArea: true,
+          shapeOptions: {
+            color: "#2563eb",
+            weight: 3,
+            fillOpacity: 0.18,
+          },
+        },
+        rectangle: {
+          shapeOptions: {
+            color: "#2563eb",
+            weight: 3,
+            fillOpacity: 0.18,
+          },
+        },
+      },
+      edit: {
+        featureGroup: drawnItems,
+        remove: true,
+      },
+    });
+    map.addControl(drawControl);
+
+    const output = document.getElementById("geojsonOutput");
+    const statusEl = document.getElementById("status");
+    const areaValue = document.getElementById("areaValue");
+    const vertexValue = document.getElementById("vertexValue");
+    const downloadButton = document.getElementById("downloadButton");
+    const copyButton = document.getElementById("copyButton");
+    const clearButton = document.getElementById("clearButton");
+    const fitButton = document.getElementById("fitButton");
+    const copyCommandButton = document.getElementById("copyCommandButton");
+    const resetCommandButton = document.getElementById("resetCommandButton");
+    const commandTypeInput = document.getElementById("commandTypeInput");
+    const areaPathInput = document.getElementById("areaPathInput");
+    const buildingsPathInput = document.getElementById("buildingsPathInput");
+    const demPathInput = document.getElementById("demPathInput");
+    const outPathInput = document.getElementById("outPathInput");
+    const resolutionInput = document.getElementById("resolutionInput");
+    const commandOutput = document.getElementById("commandOutput");
+    const commandInputs = [commandTypeInput, areaPathInput, buildingsPathInput, demPathInput, outPathInput, resolutionInput];
+
+    map.on(L.Draw.Event.CREATED, (event) => {
+      drawnItems.clearLayers();
+      drawnItems.addLayer(event.layer);
+      updateOutput();
+    });
+
+    map.on(L.Draw.Event.EDITED, updateOutput);
+    map.on(L.Draw.Event.DELETED, updateOutput);
+
+    downloadButton.addEventListener("click", () => {
+      const blob = new Blob([output.value], { type: "application/geo+json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "area.geojson";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus("Downloaded area.geojson.");
+    });
+
+    copyButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(output.value);
+      setStatus("Copied GeoJSON to clipboard.");
+    });
+
+    copyCommandButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(commandOutput.value);
+      setStatus("Copied command to clipboard.");
+    });
+
+    resetCommandButton.addEventListener("click", () => {
+      areaPathInput.value = "data\\areas\\area.geojson";
+      buildingsPathInput.value = "data\\buildings\\my_region_buildings.shp";
+      demPathInput.value = "data\\dem\\my_region_dem.tif";
+      outPathInput.value = "output\\my_area.stl";
+      resolutionInput.value = "10";
+      commandTypeInput.value = "inspect";
+      updateCommand();
+      setStatus("Reset command paths.");
+    });
+
+    commandInputs.forEach((input) => {
+      input.addEventListener("input", updateCommand);
+    });
+
+    clearButton.addEventListener("click", () => {
+      drawnItems.clearLayers();
+      updateOutput();
+    });
+
+    fitButton.addEventListener("click", () => {
+      if (drawnItems.getLayers().length > 0) {
+        map.fitBounds(drawnItems.getBounds(), { padding: [32, 32] });
+      }
+    });
+
+    function updateOutput() {
+      const layers = drawnItems.getLayers();
+      if (layers.length === 0) {
+        output.value = "";
+        areaValue.textContent = "0 km2";
+        vertexValue.textContent = "0";
+        setButtons(false);
+        setStatus("Use the draw tools on the map.");
+        updateCommand();
+        return;
+      }
+
+      const feature = layers[0].toGeoJSON();
+      feature.properties = {
+        name: "selected_area",
+        crs_hint: "EPSG:4326",
+      };
+      const collection = {
+        type: "FeatureCollection",
+        name: "selected_area",
+        crs: {
+          type: "name",
+          properties: {
+            name: "EPSG:4326",
+          },
+        },
+        features: [feature],
+      };
+
+      output.value = JSON.stringify(collection, null, 2);
+      areaValue.textContent = `${formatArea(squareMeters(feature.geometry))} km2`;
+      vertexValue.textContent = String(countVertices(feature.geometry));
+      setButtons(true);
+      setStatus("Ready to download. Inspect inputs before running make_model.py.");
+      updateCommand();
+    }
+
+    function setButtons(enabled) {
+      downloadButton.disabled = !enabled;
+      copyButton.disabled = !enabled;
+      clearButton.disabled = !enabled;
+      fitButton.disabled = !enabled;
+    }
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
+
+    function countVertices(geometry) {
+      if (geometry.type === "Polygon") {
+        return geometry.coordinates[0].length - 1;
+      }
+      if (geometry.type === "MultiPolygon") {
+        return geometry.coordinates.reduce((sum, polygon) => sum + polygon[0].length - 1, 0);
+      }
+      return 0;
+    }
+
+    function squareMeters(geometry) {
+      if (geometry.type === "Polygon") {
+        return Math.abs(ringArea(geometry.coordinates[0]));
+      }
+      if (geometry.type === "MultiPolygon") {
+        return geometry.coordinates.reduce((sum, polygon) => sum + Math.abs(ringArea(polygon[0])), 0);
+      }
+      return 0;
+    }
+
+    function ringArea(coords) {
+      const radius = 6378137;
+      let area = 0;
+      if (coords.length < 3) return 0;
+
+      for (let i = 0; i < coords.length - 1; i += 1) {
+        const [lon1, lat1] = coords[i];
+        const [lon2, lat2] = coords[i + 1];
+        area += toRadians(lon2 - lon1) * (2 + Math.sin(toRadians(lat1)) + Math.sin(toRadians(lat2)));
+      }
+
+      return (area * radius * radius) / 2;
+    }
+
+    function toRadians(value) {
+      return (value * Math.PI) / 180;
+    }
+
+    function formatArea(value) {
+      return (value / 1000000).toFixed(value >= 1000000 ? 3 : 5);
+    }
+
+    function updateCommand() {
+      const inspectCommand = [
+        ".\\.venv\\Scripts\\python.exe scripts\\inspect_data.py `",
+        `  --area ${areaPathInput.value} \``,
+        "  --area-crs EPSG:4326 `",
+        `  --buildings ${buildingsPathInput.value} \``,
+        `  --dem ${demPathInput.value}`,
+      ];
+      const modelCommand = [
+        ".\\.venv\\Scripts\\python.exe make_model.py `",
+        `  --area ${areaPathInput.value} \``,
+        "  --area-crs EPSG:4326 `",
+        `  --buildings ${buildingsPathInput.value} \``,
+        `  --dem ${demPathInput.value} \``,
+        `  --out ${outPathInput.value} \``,
+        `  --terrain-resolution ${resolutionInput.value} \``,
+        "  --height-field HEIGHT `",
+        "  --floor-field GRND_FLR `",
+        "  --separate `",
+        "  --preview",
+      ];
+
+      commandOutput.value = (commandTypeInput.value === "inspect" ? inspectCommand : modelCommand).join("\n");
+    }
+
+    updateCommand();
+  </script>
+</body>
+</html>

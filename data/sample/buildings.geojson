@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "buildings",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5179" } },
+"features": [
+{ "type": "Feature", "properties": { "HEIGHT": 18.0, "GRND_FLR": 6.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 1015.0, 1015.0 ], [ 1040.0, 1015.0 ], [ 1040.0, 1045.0 ], [ 1015.0, 1045.0 ], [ 1015.0, 1015.0 ] ] ] } },
+{ "type": "Feature", "properties": { "HEIGHT": 0.0, "GRND_FLR": 4.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 1060.0, 1020.0 ], [ 1090.0, 1020.0 ], [ 1090.0, 1055.0 ], [ 1060.0, 1055.0 ], [ 1060.0, 1020.0 ] ] ] } },
+{ "type": "Feature", "properties": { "HEIGHT": null, "GRND_FLR": null }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 1035.0, 1070.0 ], [ 1070.0, 1070.0 ], [ 1070.0, 1095.0 ], [ 1035.0, 1095.0 ], [ 1035.0, 1070.0 ] ] ] } }
+]
+}

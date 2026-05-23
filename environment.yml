@@ -1,0 +1,12 @@
+name: terrain-stl
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - geopandas
+  - rasterio
+  - shapely
+  - pyproj
+  - trimesh
+  - numpy
+  - pytest
