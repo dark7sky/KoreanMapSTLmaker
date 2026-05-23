@@ -1,6 +1,7 @@
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import mean
 from typing import Optional
 
 from shapely.geometry import MultiPolygon, Polygon
@@ -43,6 +44,7 @@ def prepare_buildings(
     min_building_area: float,
     height_fields: Optional[tuple[str, ...]] = None,
     floor_fields: Optional[tuple[str, ...]] = None,
+    base_elevation_mode: str = "representative",
 ) -> BuildingPreparationResult:
     if buildings_path is None:
         return BuildingPreparationResult([], Counter(), 0, 0, 0, 0, 0, [])
@@ -78,8 +80,7 @@ def prepare_buildings(
                     height_fields=height_fields,
                     floor_fields=floor_fields,
                 )
-                point = polygon.representative_point()
-                elevation = sampler.sample_one(point.x, point.y)
+                elevation = _sample_building_base_elevation(polygon, sampler, base_elevation_mode)
                 if elevation != elevation:
                     skipped_no_elevation_count += 1
                     continue
@@ -108,3 +109,37 @@ def _iter_polygons(geometry: BaseGeometry):
         yield geometry
     elif isinstance(geometry, MultiPolygon):
         yield from geometry.geoms
+
+
+def _sample_building_base_elevation(polygon: Polygon, sampler: ElevationSampler, mode: str) -> float:
+    mode = mode.lower()
+    if mode == "representative":
+        point = polygon.representative_point()
+        return sampler.sample_one(point.x, point.y)
+    if mode not in {"min", "mean"}:
+        raise ValueError(f"Unsupported building base elevation mode: {mode}")
+
+    elevations = [
+        elevation
+        for x, y in _building_base_sample_points(polygon)
+        if not _is_nan(elevation := sampler.sample_one(x, y))
+    ]
+    if not elevations:
+        return float("nan")
+    if mode == "min":
+        return min(elevations)
+    return mean(elevations)
+
+
+def _building_base_sample_points(polygon: Polygon):
+    point = polygon.representative_point()
+    yield point.x, point.y
+    coords = list(polygon.exterior.coords)
+    if len(coords) > 1 and coords[0] == coords[-1]:
+        coords = coords[:-1]
+    for x, y, *_ in coords:
+        yield x, y
+
+
+def _is_nan(value: float) -> bool:
+    return value != value

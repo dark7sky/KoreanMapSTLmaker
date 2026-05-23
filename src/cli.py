@@ -21,6 +21,12 @@ def main() -> None:
     parser.add_argument("--preview", action="store_true", help="Generate a self-contained preview HTML file.")
     parser.add_argument("--height-field", action="append", help="Preferred building height field. Can be repeated.")
     parser.add_argument("--floor-field", action="append", help="Preferred floor-count field. Can be repeated.")
+    parser.add_argument(
+        "--building-base-mode",
+        choices=("representative", "min", "mean"),
+        default="representative",
+        help="How to sample terrain elevation under each building footprint.",
+    )
     args = parser.parse_args()
 
     from src.pipeline import BuildOptions, build_model
@@ -43,6 +49,7 @@ def main() -> None:
         preview=args.preview,
         height_fields=tuple(args.height_field or ()),
         floor_fields=tuple(args.floor_field or ()),
+        building_base_mode=args.building_base_mode,
     )
     summary = build_model(options)
     print(f"Output: {summary['output']}")

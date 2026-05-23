@@ -256,6 +256,24 @@
         Output path
         <input id="outPathInput" value="output\my_area.stl">
       </label>
+      <label>
+        Building base mode
+        <select id="buildingBaseModeInput">
+          <option value="representative">representative</option>
+          <option value="min">min</option>
+          <option value="mean">mean</option>
+        </select>
+      </label>
+      <div class="command-row">
+        <label>
+          Height field
+          <input id="heightFieldInput" placeholder="HEIGHT">
+        </label>
+        <label>
+          Floor field
+          <input id="floorFieldInput" placeholder="GRND_FLR">
+        </label>
+      </div>
     </div>
 
     <div class="actions">
@@ -334,8 +352,21 @@
     const demPathInput = document.getElementById("demPathInput");
     const outPathInput = document.getElementById("outPathInput");
     const resolutionInput = document.getElementById("resolutionInput");
+    const buildingBaseModeInput = document.getElementById("buildingBaseModeInput");
+    const heightFieldInput = document.getElementById("heightFieldInput");
+    const floorFieldInput = document.getElementById("floorFieldInput");
     const commandOutput = document.getElementById("commandOutput");
-    const commandInputs = [commandTypeInput, areaPathInput, buildingsPathInput, demPathInput, outPathInput, resolutionInput];
+    const commandInputs = [
+      commandTypeInput,
+      areaPathInput,
+      buildingsPathInput,
+      demPathInput,
+      outPathInput,
+      resolutionInput,
+      buildingBaseModeInput,
+      heightFieldInput,
+      floorFieldInput,
+    ];
 
     map.on(L.Draw.Event.CREATED, (event) => {
       drawnItems.clearLayers();
@@ -375,6 +406,9 @@
       demPathInput.value = "data\\dem\\my_region_dem.tif";
       outPathInput.value = "output\\my_area.stl";
       resolutionInput.value = "10";
+      buildingBaseModeInput.value = "representative";
+      heightFieldInput.value = "";
+      floorFieldInput.value = "";
       commandTypeInput.value = "inspect";
       updateCommand();
       setStatus("Reset command paths.");
@@ -487,6 +521,8 @@
     }
 
     function updateCommand() {
+      const heightField = heightFieldInput.value.trim();
+      const floorField = floorFieldInput.value.trim();
       const inspectCommand = [
         ".\\.venv\\Scripts\\python.exe scripts\\inspect_data.py `",
         `  --area ${areaPathInput.value} \``,
@@ -502,11 +538,16 @@
         `  --dem ${demPathInput.value} \``,
         `  --out ${outPathInput.value} \``,
         `  --terrain-resolution ${resolutionInput.value} \``,
-        "  --height-field HEIGHT `",
-        "  --floor-field GRND_FLR `",
+        `  --building-base-mode ${buildingBaseModeInput.value} \``,
         "  --separate `",
         "  --preview",
       ];
+      if (heightField) {
+        modelCommand.splice(-2, 0, `  --height-field ${heightField} \``);
+      }
+      if (floorField) {
+        modelCommand.splice(-2, 0, `  --floor-field ${floorField} \``);
+      }
 
       commandOutput.value = (commandTypeInput.value === "inspect" ? inspectCommand : modelCommand).join("\n");
     }

@@ -7,6 +7,7 @@ from src.buildings import prepare_buildings
 from src.export import export_preview_html, export_stl, export_summary
 from src.io import load_area
 from src.mesh import make_building_meshes, make_terrain_mesh, merge_meshes
+from src.mesh_quality import mesh_summary
 from src.terrain import bounds_overlap, get_dem_info, sample_terrain
 
 
@@ -29,6 +30,7 @@ class BuildOptions:
     preview: bool
     height_fields: Optional[tuple[str, ...]]
     floor_fields: Optional[tuple[str, ...]]
+    building_base_mode: str
 
 
 def build_model(options: BuildOptions) -> dict:
@@ -53,6 +55,7 @@ def build_model(options: BuildOptions) -> dict:
         options.min_building_area,
         options.height_fields,
         options.floor_fields,
+        options.building_base_mode,
     )
     prepared_buildings = building_result.buildings
     building_meshes = make_building_meshes(
@@ -91,6 +94,7 @@ def build_model(options: BuildOptions) -> dict:
         "terrain_valid_samples": int(terrain_grid.valid.sum()),
         "min_elevation_m": terrain_grid.min_elevation,
         "building_count": len(prepared_buildings),
+        "building_base_mode": options.building_base_mode,
         "building_diagnostics": {
             "source_feature_count": building_result.source_feature_count,
             "intersect_feature_count": building_result.intersect_feature_count,
@@ -104,6 +108,7 @@ def build_model(options: BuildOptions) -> dict:
         "floor_fields": list(options.floor_fields or ()),
         "vertices": int(len(combined_mesh.vertices)),
         "faces": int(len(combined_mesh.faces)),
+        "mesh_quality": mesh_summary(combined_mesh),
         "bounds": bounds,
         "output": str(options.out_path),
     }

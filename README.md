@@ -53,6 +53,7 @@ Then run an end-to-end sample:
   --dem data/sample/dem.tif `
   --out output/sample_model.stl `
   --terrain-resolution 10 `
+  --building-base-mode representative `
   --separate `
   --preview
 ```
@@ -80,6 +81,8 @@ Implemented:
 - combined STL export
 - summary JSON export
 - self-contained preview HTML export
+- mesh quality summary in the JSON output
+- building base elevation modes: representative, min, mean
 
 MVP limitations:
 
@@ -87,6 +90,11 @@ MVP limitations:
 - Building polygons with holes are simplified to exterior rings for extrusion.
 - Building base elevation uses a representative point by default.
 - Large areas should use coarse terrain resolution first.
+
+Next-stage features:
+
+- Richer mesh repair checks for non-manifold edges and degenerate faces.
+- Area overlap selection from named datasets.
 
 ## Output
 
@@ -96,7 +104,7 @@ The tool writes:
 - `model_summary.json`
 - `model_preview.html` when `--preview` is passed
 
-Summary includes area, terrain resolution, minimum elevation, building count, height source counts, vertices, and faces.
+Summary includes area, terrain resolution, minimum elevation, building count, height source counts, mesh quality, selected building base mode, vertices, and faces.
 
 ## Master Backlog
 
@@ -115,3 +123,9 @@ See `docs/AREA_SELECTOR.md` for details.
 ## End-to-End Workflow
 
 See `docs/WORKFLOW.md` for the recommended real-data sequence.
+
+The workflow also describes the height/floor field selector, building base mode choice, mesh quality review, and dataset registry.
+
+## Dataset Registry
+
+See `docs/DATASETS.md` for the optional `datasets.json` format and listing command.

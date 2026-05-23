@@ -23,6 +23,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Merge terrain and building meshes.
 - [x] Export STL.
 - [x] Export summary JSON.
+- [x] Add mesh quality summary to JSON output.
 - [ ] Test against real VWorld/GIS building data.
 - [ ] Test against real DEM data.
 
@@ -40,9 +41,10 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [ ] Support polygon holes.
 - [ ] Add footprint simplification option.
-- [ ] Add building base mode: representative/min/mean.
+- [x] Add building base mode selector: representative/min/mean.
 - [ ] Add sloped terrain policy for building base.
 - [ ] Add per-building diagnostics.
+- [ ] Report selected base elevation mode in summary JSON.
 
 ## Phase 4 - Terrain Modeling
 
@@ -57,6 +59,8 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [ ] Add mesh repair command.
 - [ ] Check watertight/non-manifold edges.
+- [x] Summarize basic mesh quality: watertight status, Euler number, volume, and bounding box.
+- [ ] Add non-manifold edge and degenerate face counts.
 - [ ] Add scale option.
 - [ ] Add base plate option.
 - [ ] Add normal cleanup.
@@ -84,16 +88,21 @@ This project should evolve in phases so another agent can resume work at any poi
 - [ ] Streamlit UI.
 - [ ] File pickers.
 - [ ] Option form.
+- [ ] Height/floor field selector based on inspected building attributes.
+- [x] Building base mode selector.
+- [ ] Mesh quality summary panel.
 - [ ] Progress/log panel.
 - [ ] STL download link.
 - [ ] Preview integration.
 
 ## Phase 9 - Dataset Management
 
-- [ ] Dataset registry YAML.
+- [x] Dataset registry JSON with named area/DEM/building paths.
+- [ ] Extend dataset registry with CRS hints, coverage bounds, source notes, and default field mappings.
 - [ ] DEM index.
 - [ ] Building index.
 - [ ] Automatic overlap selection.
+- [ ] Registry-backed defaults for height/floor fields.
 - [ ] Cache generated outputs.
 
 ## Phase 10 - Additional Formats

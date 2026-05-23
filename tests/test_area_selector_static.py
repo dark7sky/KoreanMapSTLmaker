@@ -21,6 +21,9 @@ def test_area_selector_declares_expected_controls_and_defaults():
         "demPathInput",
         "outPathInput",
         "resolutionInput",
+        "buildingBaseModeInput",
+        "heightFieldInput",
+        "floorFieldInput",
         "commandOutput",
         "geojsonOutput",
     ]
@@ -33,6 +36,11 @@ def test_area_selector_declares_expected_controls_and_defaults():
     assert 'value="data\\dem\\my_region_dem.tif"' in html
     assert 'value="output\\my_area.stl"' in html
     assert 'value="10"' in html
+    assert 'placeholder="HEIGHT"' in html
+    assert 'placeholder="GRND_FLR"' in html
+    assert '<option value="representative">representative</option>' in html
+    assert '<option value="min">min</option>' in html
+    assert '<option value="mean">mean</option>' in html
 
 
 def test_area_selector_command_template_matches_workflow_contract():
@@ -45,8 +53,9 @@ def test_area_selector_command_template_matches_workflow_contract():
         "--buildings ${buildingsPathInput.value}",
         "--dem ${demPathInput.value}",
         "--terrain-resolution ${resolutionInput.value}",
-        "--height-field HEIGHT",
-        "--floor-field GRND_FLR",
+        "--building-base-mode ${buildingBaseModeInput.value}",
+        "--height-field ${heightField}",
+        "--floor-field ${floorField}",
         "--separate",
         "--preview",
     ]
@@ -57,6 +66,10 @@ def test_area_selector_command_template_matches_workflow_contract():
     assert '<option value="inspect">Inspect data</option>' in html
     assert '<option value="model">Make model</option>' in html
     assert "function updateCommand()" in html
+    assert "const heightField = heightFieldInput.value.trim();" in html
+    assert "const floorField = floorFieldInput.value.trim();" in html
+    assert "if (heightField)" in html
+    assert "if (floorField)" in html
     assert 'commandTypeInput.value === "inspect"' in html
     assert "copyCommandButton.addEventListener" in html
     assert "resetCommandButton.addEventListener" in html
