@@ -91,7 +91,8 @@ Repair an existing mesh (STL/OBJ):
 ```powershell
 .\.venv\Scripts\python.exe scripts\repair_mesh.py `
   --input output/sample_model.stl `
-  --output output/sample_model_repaired.stl
+  --output output/sample_model_repaired.stl `
+  --summary-out output/sample_model_repair_summary.json
 ```
 
 ## Current Scope

@@ -18,6 +18,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         action="store_true",
         help="Skip hole-filling step (normal fix and face cleanup still run).",
     )
+    parser.add_argument("--summary-out", type=Path, help="Write repair summary JSON to this path.")
     args = parser.parse_args(argv)
 
     summary = repair_mesh_file(
@@ -25,6 +26,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         output_path=args.output,
         try_fill_holes=not args.skip_fill_holes,
     )
+    if args.summary_out is not None:
+        args.summary_out.parent.mkdir(parents=True, exist_ok=True)
+        args.summary_out.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
 

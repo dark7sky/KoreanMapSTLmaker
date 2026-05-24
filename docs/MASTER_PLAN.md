@@ -118,7 +118,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [x] Batch JSON format (`{"jobs":[...]}`).
 - [x] Multiple area jobs.
-- [ ] Retry failed jobs.
+- [x] Retry failed jobs.
 - [x] Summary report.
 - [ ] Parallel processing.
 

@@ -56,6 +56,26 @@ def test_build_options_rejects_string_booleans():
         )
 
 
+def test_build_options_rejects_invalid_numeric_and_list_fields():
+    with pytest.raises(ValueError, match="must be numeric"):
+        run_batch.build_options_from_job(
+            {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "terrain_resolution": True},
+            0,
+        )
+
+    with pytest.raises(ValueError, match="list of non-empty strings"):
+        run_batch.build_options_from_job(
+            {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "height_field": ["HEIGHT", ""]},
+            0,
+        )
+
+    with pytest.raises(ValueError, match="non-empty strings"):
+        run_batch.build_options_from_job(
+            {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "export_format": ["stl", 123]},
+            0,
+        )
+
+
 def test_run_jobs_records_failures_and_keeps_going(monkeypatch):
     calls = []
 
@@ -81,6 +101,44 @@ def test_run_jobs_records_failures_and_keeps_going(monkeypatch):
     assert summary["failure_count"] == 1
     assert [job["status"] for job in summary["jobs"]] == ["ok", "failed", "ok"]
     assert summary["jobs"][1]["error"] == "dem overlap failed"
+
+
+def test_run_jobs_retries_failed_jobs(monkeypatch):
+    attempts = {"flaky.stl": 0}
+
+    def fake_build_model(options):
+        attempts[options.out_path.name] += 1
+        if attempts[options.out_path.name] == 1:
+            raise RuntimeError("temporary failure")
+        return {"output": str(options.out_path), "summary": str(options.out_path.with_suffix(".json"))}
+
+    monkeypatch.setattr(run_batch, "build_model", fake_build_model)
+
+    summary = run_batch.run_jobs(
+        [{"name": "flaky", "area": "a.geojson", "dem": "a.tif", "out": "flaky.stl"}],
+        retries=1,
+    )
+
+    assert summary["success_count"] == 1
+    assert summary["failure_count"] == 0
+    assert summary["jobs"][0]["status"] == "ok"
+    assert summary["jobs"][0]["attempts"] == 2
+
+
+def test_run_jobs_records_all_retry_errors(monkeypatch):
+    def fake_build_model(options):
+        raise RuntimeError(f"failed {options.out_path.name}")
+
+    monkeypatch.setattr(run_batch, "build_model", fake_build_model)
+
+    summary = run_batch.run_jobs(
+        [{"name": "bad", "area": "a.geojson", "dem": "a.tif", "out": "bad.stl"}],
+        retries=2,
+    )
+
+    assert summary["failure_count"] == 1
+    assert summary["jobs"][0]["attempts"] == 3
+    assert summary["jobs"][0]["errors"] == ["failed bad.stl", "failed bad.stl", "failed bad.stl"]
 
 
 def test_main_writes_summary_and_returns_non_zero_on_failures(tmp_path, monkeypatch):

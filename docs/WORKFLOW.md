@@ -194,7 +194,8 @@ Run:
 ```powershell
 .\.venv\Scripts\python.exe scripts\run_batch.py `
   --batch batch_jobs.json `
-  --summary-out output\batch_summary.json
+  --summary-out output\batch_summary.json `
+  --retries 1
 ```
 
-The script runs jobs one by one using the same model pipeline as `make_model.py`. Failures are recorded in the batch summary, and the process exits non-zero only after all jobs finish.
+The script runs jobs one by one using the same model pipeline as `make_model.py`. Failures are recorded in the batch summary, each failed job can be retried with `--retries`, and the process exits non-zero only after all jobs finish.

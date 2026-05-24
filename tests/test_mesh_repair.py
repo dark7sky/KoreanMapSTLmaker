@@ -40,6 +40,7 @@ def test_repair_mesh_file_removes_basic_bad_faces_and_exports(tmp_path):
 def test_repair_mesh_script_prints_json_summary(tmp_path, capsys):
     input_path = tmp_path / "source.stl"
     output_path = tmp_path / "result.obj"
+    summary_path = tmp_path / "repair_summary.json"
     trimesh.creation.box().export(input_path)
 
     repair_mesh.main(
@@ -48,6 +49,8 @@ def test_repair_mesh_script_prints_json_summary(tmp_path, capsys):
             str(input_path),
             "--output",
             str(output_path),
+            "--summary-out",
+            str(summary_path),
             "--skip-fill-holes",
         ]
     )
@@ -56,8 +59,10 @@ def test_repair_mesh_script_prints_json_summary(tmp_path, capsys):
     summary = json.loads(captured.out)
 
     assert output_path.exists()
+    assert summary_path.exists()
     assert summary["format"] == "obj"
     assert Path(summary["output"]) == output_path
+    assert json.loads(summary_path.read_text(encoding="utf-8"))["output"] == str(output_path)
     assert "operations" in summary
     assert "before" in summary
     assert "after" in summary

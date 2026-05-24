@@ -18,6 +18,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help='Batch JSON path with top-level {"jobs":[...]}',
     )
     parser.add_argument("--summary-out", type=Path, help="Write batch execution summary JSON to this path.")
+    parser.add_argument("--retries", type=_non_negative_int, default=0, help="Retry each failed job this many times.")
     return parser.parse_args(argv)
 
 
@@ -45,7 +46,12 @@ def _require_path(job: dict[str, Any], key: str, job_index: int) -> Path:
 
 def _get_float(job: dict[str, Any], key: str, default: float) -> float:
     value = job.get(key, default)
-    return float(value)
+    if isinstance(value, bool):
+        raise ValueError(f'"{key}" must be numeric when provided.')
+    try:
+        return float(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f'"{key}" must be numeric when provided.') from error
 
 
 def _get_bool(job: dict[str, Any], key: str, default: bool) -> bool:
@@ -68,7 +74,9 @@ def _get_tuple_of_strings(job: dict[str, Any], key: str) -> tuple[str, ...]:
         return ()
     if not isinstance(value, list):
         raise ValueError(f'"{key}" must be a list when provided.')
-    return tuple(str(item) for item in value)
+    if not all(isinstance(item, str) and item.strip() for item in value):
+        raise ValueError(f'"{key}" must be a list of non-empty strings when provided.')
+    return tuple(value)
 
 
 def _get_export_formats(job: dict[str, Any]) -> tuple[str, ...]:
@@ -77,7 +85,9 @@ def _get_export_formats(job: dict[str, Any]) -> tuple[str, ...]:
         values = [values]
     if not isinstance(values, list) or not values:
         raise ValueError('"export_format" must be a non-empty list or a string.')
-    normalized = tuple(dict.fromkeys(str(value).lower() for value in values))
+    if not all(isinstance(value, str) and value.strip() for value in values):
+        raise ValueError('"export_format" must contain non-empty strings.')
+    normalized = tuple(dict.fromkeys(value.lower() for value in values))
     invalid = [value for value in normalized if value not in {"stl", "obj"}]
     if invalid:
         raise ValueError(f"Unsupported export format(s): {', '.join(invalid)}")
@@ -110,22 +120,30 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
     )
 
 
-def run_jobs(jobs: list[dict[str, Any]]) -> dict[str, Any]:
+def run_jobs(jobs: list[dict[str, Any]], *, retries: int = 0) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     failure_count = 0
     for index, job in enumerate(jobs):
         job_name = str(job.get("name") or f"job_{index + 1}")
         record: dict[str, Any] = {"index": index, "name": job_name}
-        try:
-            options = build_options_from_job(job, index)
-            summary = build_model(options)
-            record["status"] = "ok"
-            record["output"] = summary.get("output")
-            record["summary"] = summary.get("summary")
-        except Exception as exc:  # pragma: no cover - exercised in tests via monkeypatch
+        errors: list[str] = []
+        for attempt in range(retries + 1):
+            try:
+                options = build_options_from_job(job, index)
+                summary = build_model(options)
+                record["status"] = "ok"
+                record["attempts"] = attempt + 1
+                record["output"] = summary.get("output")
+                record["summary"] = summary.get("summary")
+                break
+            except Exception as exc:  # pragma: no cover - exercised in tests via monkeypatch
+                errors.append(str(exc))
+        if "status" not in record:
             failure_count += 1
             record["status"] = "failed"
-            record["error"] = str(exc)
+            record["attempts"] = retries + 1
+            record["error"] = errors[-1]
+            record["errors"] = errors
         results.append(record)
     return {
         "job_count": len(jobs),
@@ -140,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     jobs = load_jobs(args.batch)
     if args.summary_out is not None:
         _check_summary_out_does_not_collide(args.summary_out, jobs)
-    batch_summary = run_jobs(jobs)
+    batch_summary = run_jobs(jobs, retries=args.retries)
     if args.summary_out is not None:
         args.summary_out.parent.mkdir(parents=True, exist_ok=True)
         args.summary_out.write_text(json.dumps(batch_summary, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -158,6 +176,13 @@ def _check_summary_out_does_not_collide(summary_out: Path, jobs: list[dict[str, 
             raise ValueError(
                 f'--summary-out collides with model summary for job {index}: "{model_summary_path}"'
             )
+
+
+def _non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be 0 or greater")
+    return parsed
 
 
 if __name__ == "__main__":
