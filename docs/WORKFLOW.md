@@ -134,6 +134,12 @@ output/my_area_summary.json
 The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
 Mesh quality currently includes watertight status, Euler number, volume, bounding box, non-manifold edge count, and degenerate face count.
 
+Print a rerun command from a saved model summary:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\command_from_summary.py output\my_area_summary.json
+```
+
 ## 8. Dataset Registry
 
 For repeated work with the same source data, maintain a dataset registry that names each DEM and building dataset and records the details needed to select it reliably.

@@ -141,6 +141,7 @@ The tool writes:
 - `model_preview.html` when `--preview` is passed
 
 Summary includes area, terrain resolution, minimum elevation, building count, height source counts, mesh quality, selected building base mode, generation options, vertices, and faces.
+Use `scripts\command_from_summary.py output\model_summary.json` to print a rerun command from the saved options.
 The preview panel also shows a compact summary and clickable local links for generated `obj` / separate `stl` outputs when those files are present in the summary.
 
 ## Master Backlog
