@@ -138,6 +138,7 @@ def build_model(options: BuildOptions) -> dict:
         "output": output_paths[options.export_formats[0]],
         "outputs": output_paths,
         "export_formats": list(options.export_formats),
+        "options": _summary_options(options),
     }
     summary_path = export_summary(summary, options.out_path)
     summary["summary"] = str(summary_path)
@@ -162,3 +163,29 @@ def _check_inputs(options: BuildOptions) -> None:
         raise FileNotFoundError(options.dem_path)
     if options.buildings_path is not None and not options.buildings_path.exists():
         raise FileNotFoundError(options.buildings_path)
+
+
+def _summary_options(options: BuildOptions) -> dict[str, object]:
+    return {
+        "area": str(options.area_path),
+        "buildings": str(options.buildings_path) if options.buildings_path is not None else None,
+        "dem": str(options.dem_path),
+        "out": str(options.out_path),
+        "target_crs": options.target_crs,
+        "area_crs": options.area_crs,
+        "building_crs": options.building_crs,
+        "terrain_resolution": options.terrain_resolution,
+        "base_thickness": options.base_thickness,
+        "default_floor_height": options.default_floor_height,
+        "default_building_height": options.default_building_height,
+        "min_building_area": options.min_building_area,
+        "simplify_tolerance": options.simplify_tolerance,
+        "max_area_km2": options.max_area_km2,
+        "separate": options.separate,
+        "preview": options.preview,
+        "height_fields": list(options.height_fields or ()),
+        "floor_fields": list(options.floor_fields or ()),
+        "building_base_mode": options.building_base_mode,
+        "export_formats": list(options.export_formats),
+        "z_scale": options.z_scale,
+    }

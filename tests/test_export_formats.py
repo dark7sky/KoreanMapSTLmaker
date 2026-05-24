@@ -197,6 +197,9 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     assert export_obj_calls == [tmp_path / "model.obj"]
     assert summary["output"] == str(tmp_path / "model.obj")
     assert summary["outputs"] == {"obj": str(tmp_path / "model.obj")}
+    assert summary["options"]["out"] == str(tmp_path / "model.stl")
+    assert summary["options"]["export_formats"] == ["obj"]
+    assert summary["options"]["simplify_tolerance"] == 0.0
 
 
 def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp_path):

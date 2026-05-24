@@ -131,7 +131,7 @@ Also check:
 output/my_area_summary.json
 ```
 
-The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, height source statistics, mesh quality, and the selected building base mode.
+The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
 Mesh quality currently includes watertight status, Euler number, volume, bounding box, non-manifold edge count, and degenerate face count.
 
 ## 8. Dataset Registry

@@ -140,7 +140,7 @@ The tool writes:
 - `model_summary.json`
 - `model_preview.html` when `--preview` is passed
 
-Summary includes area, terrain resolution, minimum elevation, building count, height source counts, mesh quality, selected building base mode, vertices, and faces.
+Summary includes area, terrain resolution, minimum elevation, building count, height source counts, mesh quality, selected building base mode, generation options, vertices, and faces.
 The preview panel also shows a compact summary and clickable local links for generated `obj` / separate `stl` outputs when those files are present in the summary.
 
 ## Master Backlog
