@@ -17,6 +17,12 @@ def main() -> None:
     parser.add_argument("--default-building-height", type=_positive_float, default=6.0, help="Default building height.")
     parser.add_argument("--z-scale", type=_positive_float, default=1.0, help="Vertical exaggeration scale factor.")
     parser.add_argument("--min-building-area", type=_non_negative_float, default=4.0, help="Drop smaller buildings, sqm.")
+    parser.add_argument(
+        "--simplify-tolerance",
+        type=_non_negative_float,
+        default=0.0,
+        help="Simplify building footprints in meters after clipping (0 disables simplification).",
+    )
     parser.add_argument("--max-area-km2", type=_positive_float, default=4.0, help="Safety limit for selected area.")
     parser.add_argument("--separate", action="store_true", help="Also export terrain and buildings separately.")
     parser.add_argument(
@@ -53,6 +59,7 @@ def main() -> None:
         default_floor_height=args.default_floor_height,
         default_building_height=args.default_building_height,
         min_building_area=args.min_building_area,
+        simplify_tolerance=args.simplify_tolerance,
         max_area_km2=args.max_area_km2,
         separate=args.separate,
         preview=args.preview,

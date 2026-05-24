@@ -86,6 +86,14 @@ Inspect sample inputs:
   --dem data/sample/dem.tif
 ```
 
+Repair an existing mesh (STL/OBJ):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\repair_mesh.py `
+  --input output/sample_model.stl `
+  --output output/sample_model_repaired.stl
+```
+
 ## Current Scope
 
 Implemented:
@@ -96,6 +104,7 @@ Implemented:
 - terrain mesh generation with base thickness
 - vertical terrain exaggeration (`--z-scale`)
 - building footprint clipping
+- optional building footprint simplification (`--simplify-tolerance`)
 - building height fallback rules
 - simple building extrusion
 - combined STL export
@@ -104,6 +113,7 @@ Implemented:
 - self-contained preview HTML export
 - mesh quality summary in the JSON output
 - mesh quality includes non-manifold edge and degenerate face counts
+- standalone mesh repair command for STL/OBJ (`scripts/repair_mesh.py`)
 - building base elevation modes: representative, min, mean
 - polygon holes are preserved during building extrusion
 - dataset command generation from registry entries (`scripts/command_from_dataset.py`)
@@ -130,6 +140,7 @@ The tool writes:
 - `model_preview.html` when `--preview` is passed
 
 Summary includes area, terrain resolution, minimum elevation, building count, height source counts, mesh quality, selected building base mode, vertices, and faces.
+The preview panel also shows a compact summary and clickable local links for generated `obj` / separate `stl` outputs when those files are present in the summary.
 
 ## Master Backlog
 

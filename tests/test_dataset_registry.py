@@ -85,6 +85,10 @@ def test_summarize_registry_includes_optional_metadata_when_present(tmp_path):
                     "height_fields": ["height_m", "hgt"],
                     "floor_fields": ["floors", "stories"],
                     "building_base_mode": "min",
+                    "coverage_bounds": [126.9, 37.4, 127.2, 37.7],
+                    "source_date": "2024-11-01",
+                    "license": "ODC-BY-1.0",
+                    "source_url": "https://example.com/datasets/sample",
                     "notes": "prefers rooftop height over eave height",
                 }
             ]
@@ -100,6 +104,10 @@ def test_summarize_registry_includes_optional_metadata_when_present(tmp_path):
         "height_fields": ["height_m", "hgt"],
         "floor_fields": ["floors", "stories"],
         "building_base_mode": "min",
+        "coverage_bounds": [126.9, 37.4, 127.2, 37.7],
+        "source_date": "2024-11-01",
+        "license": "ODC-BY-1.0",
+        "source_url": "https://example.com/datasets/sample",
         "notes": "prefers rooftop height over eave height",
     }
 
@@ -191,6 +199,42 @@ def test_load_registry_accepts_utf8_bom(tmp_path):
                 ]
             },
             "datasets[0].building_base_mode",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "coverage_bounds": [1, 2, 3]}
+                ]
+            },
+            "datasets[0].coverage_bounds",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "coverage_bounds": [1, "2", 3, 4]}
+                ]
+            },
+            "datasets[0].coverage_bounds",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "coverage_bounds": [1, True, 3, 4]}
+                ]
+            },
+            "datasets[0].coverage_bounds",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "source_date": ""}]},
+            "datasets[0].source_date",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "license": 123}]},
+            "datasets[0].license",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "source_url": " "}]},
+            "datasets[0].source_url",
         ),
     ],
 )

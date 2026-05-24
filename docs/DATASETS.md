@@ -18,6 +18,10 @@ Example `datasets.json` at the project root:
       "height_fields": ["height_m", "height"],
       "floor_fields": ["floors", "stories"],
       "building_base_mode": "min",
+      "coverage_bounds": [126.9, 37.4, 127.2, 37.7],
+      "source_date": "2024-11-01",
+      "license": "ODC-BY-1.0",
+      "source_url": "https://example.com/datasets/sample_block",
       "notes": "Optional dataset-specific hints."
     }
   ]
@@ -56,5 +60,7 @@ The command validates that:
 - optional `target_crs`, `area_crs`, `building_crs`, and `notes` are non-empty strings when present
 - optional `building_base_mode` is one of `representative`, `min`, or `mean`
 - optional `height_fields` and `floor_fields` are non-empty lists of non-empty strings when present
+- optional `coverage_bounds` is a list of four numeric values in `[minx, miny, maxx, maxy]` order when present
+- optional `source_date`, `license`, and `source_url` are non-empty strings when present
 
 The JSON summary reports the resolved path for each dataset input, lists any missing path fields in `missing_paths`, and includes a `metadata` object when optional fields are present.

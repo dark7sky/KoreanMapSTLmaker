@@ -42,6 +42,7 @@ def prepare_buildings(
     default_floor_height: float,
     default_building_height: float,
     min_building_area: float,
+    simplify_tolerance: float = 0.0,
     height_fields: Optional[tuple[str, ...]] = None,
     floor_fields: Optional[tuple[str, ...]] = None,
     base_elevation_mode: str = "representative",
@@ -68,6 +69,10 @@ def prepare_buildings(
     try:
         for _, row in gdf.iterrows():
             clipped = row.geometry.intersection(area)
+            clipped = _repair_geometry(clipped)
+            if simplify_tolerance > 0:
+                clipped = clipped.simplify(simplify_tolerance, preserve_topology=True)
+                clipped = _repair_geometry(clipped)
             for polygon in _iter_polygons(clipped):
                 clipped_polygon_count += 1
                 if polygon.area < min_building_area:
@@ -109,6 +114,12 @@ def _iter_polygons(geometry: BaseGeometry):
         yield geometry
     elif isinstance(geometry, MultiPolygon):
         yield from geometry.geoms
+
+
+def _repair_geometry(geometry: BaseGeometry) -> BaseGeometry:
+    if geometry.is_empty or geometry.is_valid:
+        return geometry
+    return geometry.buffer(0)
 
 
 def _sample_building_base_elevation(polygon: Polygon, sampler: ElevationSampler, mode: str) -> float:

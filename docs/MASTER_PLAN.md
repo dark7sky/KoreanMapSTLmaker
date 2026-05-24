@@ -40,7 +40,7 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 3 - Building Modeling
 
 - [x] Support polygon holes.
-- [ ] Add footprint simplification option.
+- [x] Add footprint simplification option.
 - [x] Add building base mode selector: representative/min/mean.
 - [ ] Add sloped terrain policy for building base.
 - [ ] Add per-building diagnostics.
@@ -57,7 +57,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 5 - Print-Ready STL
 
-- [ ] Add mesh repair command.
+- [x] Add mesh repair command.
 - [ ] Check watertight/non-manifold edges.
 - [x] Summarize basic mesh quality: watertight status, Euler number, volume, and bounding box.
 - [x] Add non-manifold edge and degenerate face counts.
@@ -100,7 +100,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Dataset registry JSON with named area/DEM/building paths.
 - [x] Generate inspect/model command templates from dataset registry entries.
 - [x] Extend dataset registry with CRS hints, source notes, and default field mappings.
-- [ ] Extend dataset registry with coverage bounds, source dates, and license notes.
+- [x] Extend dataset registry with coverage bounds, source dates, and license notes.
 - [ ] DEM index.
 - [ ] Building index.
 - [ ] Automatic overlap selection.
@@ -116,10 +116,10 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 11 - Batch Processing
 
-- [ ] Batch YAML format.
-- [ ] Multiple area jobs.
+- [x] Batch JSON format (`{"jobs":[...]}`).
+- [x] Multiple area jobs.
 - [ ] Retry failed jobs.
-- [ ] Summary report.
+- [x] Summary report.
 - [ ] Parallel processing.
 
 ## Phase 12 - Optional Web Service

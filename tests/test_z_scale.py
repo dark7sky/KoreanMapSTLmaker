@@ -97,6 +97,7 @@ def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
         default_floor_height=3.0,
         default_building_height=6.0,
         min_building_area=0.0,
+        simplify_tolerance=0.0,
         max_area_km2=10.0,
         separate=False,
         preview=False,

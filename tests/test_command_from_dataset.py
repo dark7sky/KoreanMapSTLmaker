@@ -79,6 +79,34 @@ def test_build_commands_include_optional_metadata(tmp_path):
     assert "--floor-field floors --floor-field stories" in make_model_command
 
 
+def test_build_commands_tolerates_extended_registry_metadata(tmp_path):
+    registry_path = tmp_path / "datasets.json"
+    write_registry(
+        registry_path,
+        {
+            "datasets": [
+                {
+                    "name": "sample",
+                    "area": "data/area.geojson",
+                    "dem": "data/dem.tif",
+                    "buildings": "data/buildings.geojson",
+                    "coverage_bounds": [126.9, 37.4, 127.2, 37.7],
+                    "source_date": "2024-11-01",
+                    "license": "ODC-BY-1.0",
+                    "source_url": "https://example.com/datasets/sample",
+                }
+            ]
+        },
+    )
+
+    inspect_command, make_model_command = command_from_dataset.build_commands(registry_path, "sample")
+
+    assert "scripts\\inspect_data.py" in inspect_command
+    assert "make_model.py" in make_model_command
+    assert "--source-url" not in inspect_command
+    assert "--source-url" not in make_model_command
+
+
 def test_build_commands_rejects_unknown_dataset(tmp_path):
     registry_path = tmp_path / "datasets.json"
     write_registry(registry_path, {"datasets": []})

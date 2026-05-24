@@ -40,6 +40,7 @@ def test_cli_default_export_format_is_stl(monkeypatch):
             default_floor_height=3.0,
             default_building_height=6.0,
             min_building_area=4.0,
+            simplify_tolerance=0.0,
             max_area_km2=4.0,
             separate=False,
             export_format=None,
@@ -60,6 +61,45 @@ def test_cli_default_export_format_is_stl(monkeypatch):
 
     assert captured["formats"] == ("stl",)
     assert src.cli._normalize_export_formats(["stl", "obj", "stl"]) == ("stl", "obj")
+
+
+def test_cli_passes_simplify_tolerance(monkeypatch):
+    captured = {}
+
+    def fake_parse_args(self):
+        return Namespace(
+            area=Path("area.geojson"),
+            buildings=None,
+            dem=Path("dem.tif"),
+            out=Path("model.stl"),
+            target_crs="EPSG:5179",
+            area_crs=None,
+            building_crs=None,
+            terrain_resolution=10.0,
+            base_thickness=2.0,
+            default_floor_height=3.0,
+            default_building_height=6.0,
+            min_building_area=4.0,
+            simplify_tolerance=1.25,
+            max_area_km2=4.0,
+            separate=False,
+            export_format=None,
+            preview=False,
+            height_field=None,
+            floor_field=None,
+            building_base_mode="representative",
+        )
+
+    def fake_build_model(options):
+        captured["simplify_tolerance"] = options.simplify_tolerance
+        return {"output": "model.stl", "building_count": 0, "faces": 0}
+
+    monkeypatch.setattr(src.cli.argparse.ArgumentParser, "parse_args", fake_parse_args)
+    monkeypatch.setattr("src.pipeline.build_model", fake_build_model)
+
+    src.cli.main()
+
+    assert captured["simplify_tolerance"] == 1.25
 
 
 def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypatch, tmp_path):
@@ -139,6 +179,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         default_floor_height=3.0,
         default_building_height=6.0,
         min_building_area=4.0,
+        simplify_tolerance=0.0,
         max_area_km2=4.0,
         separate=True,
         preview=False,
@@ -172,6 +213,7 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
         default_floor_height=3.0,
         default_building_height=6.0,
         min_building_area=4.0,
+        simplify_tolerance=0.0,
         max_area_km2=4.0,
         separate=False,
         preview=True,

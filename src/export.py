@@ -29,7 +29,12 @@ def export_summary(summary: dict[str, Any], out_path: Path) -> Path:
 def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
     preview_path = stl_path.with_name(f"{stl_path.stem}_preview.html")
     stl_base64 = base64.b64encode(stl_path.read_bytes()).decode("ascii")
-    summary_json = json.dumps(summary, indent=2)
+    summary_json = (
+        json.dumps(summary, indent=2)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
     title = stl_path.name
     html = f"""<!doctype html>
 <html lang="en">
@@ -62,7 +67,38 @@ def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
       border-radius: 8px;
       font-size: 13px;
       line-height: 1.45;
-      white-space: pre-wrap;
+    }}
+    #panel h2 {{
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f2f2f2;
+    }}
+    #panel dl {{
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 10px;
+    }}
+    #panel dt {{
+      color: #b4b4b4;
+    }}
+    #panel dd {{
+      margin: 0;
+      color: #efefef;
+      word-break: break-word;
+    }}
+    #panel .outputs {{
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }}
+    #panel .outputs ul {{
+      margin: 6px 0 0;
+      padding-left: 16px;
+    }}
+    #panel a {{
+      color: #9fcbff;
     }}
   </style>
 </head>
@@ -132,13 +168,54 @@ def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
     grid.position.z = -size.z / 2;
     scene.add(grid);
 
-    document.getElementById("panel").textContent =
-      `Model: ${{summary.output}}\\n` +
-      `Buildings: ${{summary.building_count}}\\n` +
-      `Vertices: ${{summary.vertices}}\\n` +
-      `Faces: ${{summary.faces}}\\n` +
-      `Min elevation: ${{summary.min_elevation_m.toFixed(2)}} m\\n` +
-      `Terrain resolution: ${{summary.terrain_resolution_m}} m`;
+    function toFileHref(pathValue) {{
+      if (/^[a-zA-Z]:[\\\\/]/.test(pathValue)) {{
+        return `file:///${{pathValue.replace(/\\\\/g, "/")}}`;
+      }}
+      if (pathValue.startsWith("/") || pathValue.startsWith("\\\\")) {{
+        return `file://${{pathValue.replace(/\\\\/g, "/")}}`;
+      }}
+      return pathValue.replace(/\\\\/g, "/");
+    }}
+
+    function fileName(pathValue) {{
+      return pathValue.split(/[\\\\/]/).pop();
+    }}
+
+    function escapeHtml(value) {{
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }}
+
+    function escapeAttribute(value) {{
+      return escapeHtml(value).replace(/'/g, "&#39;");
+    }}
+
+    const panel = document.getElementById("panel");
+    const lines = [
+      ["Model", summary.output || ""],
+      ["Buildings", summary.building_count ?? 0],
+      ["Vertices", summary.vertices ?? 0],
+      ["Faces", summary.faces ?? 0],
+      ["Min elevation", `${{Number(summary.min_elevation_m ?? 0).toFixed(2)}} m`],
+      ["Terrain resolution", `${{summary.terrain_resolution_m ?? 0}} m`],
+    ];
+    const outputs = Object.entries(summary.outputs || {{}})
+      .filter(([key]) => key === "obj" || key.endsWith("_stl"));
+    const rowsHtml = lines
+      .map(([label, value]) => `<dt>${{escapeHtml(label)}}</dt><dd>${{escapeHtml(value)}}</dd>`)
+      .join("");
+    const outputsHtml = outputs.length
+      ? `<div class="outputs"><strong>Output files</strong><ul>${{
+          outputs
+            .map(([, pathValue]) => `<li><a href="${{escapeAttribute(toFileHref(String(pathValue)))}}">${{escapeHtml(fileName(String(pathValue)))}}</a></li>`)
+            .join("")
+        }}</ul></div>`
+      : "";
+    panel.innerHTML = `<h2>Preview Summary</h2><dl>${{rowsHtml}}</dl>${{outputsHtml}}`;
 
     window.addEventListener("resize", () => {{
       camera.aspect = window.innerWidth / window.innerHeight;

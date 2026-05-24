@@ -12,6 +12,10 @@ OPTIONAL_DATASET_FIELDS = (
     "height_fields",
     "floor_fields",
     "building_base_mode",
+    "coverage_bounds",
+    "source_date",
+    "license",
+    "source_url",
     "notes",
 )
 BUILDING_BASE_MODES = ("representative", "min", "mean")
@@ -134,6 +138,23 @@ def validate_registry(registry: Any, registry_path: Path) -> None:
                 for item in value:
                     if not isinstance(item, str) or not item.strip():
                         raise ValueError(f"{label}.{field} must be a non-empty list of strings")
+
+        if "coverage_bounds" in dataset:
+            bounds = dataset["coverage_bounds"]
+            if not isinstance(bounds, list) or len(bounds) != 4:
+                raise ValueError(f"{label}.coverage_bounds must be a list of 4 numeric values [minx, miny, maxx, maxy]")
+            if not all(_is_number(value) for value in bounds):
+                raise ValueError(f"{label}.coverage_bounds must be a list of 4 numeric values [minx, miny, maxx, maxy]")
+
+        for field in ("source_date", "license", "source_url"):
+            if field in dataset:
+                value = dataset[field]
+                if not isinstance(value, str) or not value.strip():
+                    raise ValueError(f"{label}.{field} must be a non-empty string")
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 if __name__ == "__main__":

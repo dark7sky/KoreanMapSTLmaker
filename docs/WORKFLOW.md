@@ -147,6 +147,10 @@ Current registry fields:
 - Optional CRS hints.
 - Optional height and floor field preferences.
 - Optional building base mode.
+- Optional coverage bounds.
+- Optional source date.
+- Optional license.
+- Optional source URL.
 - Optional notes.
 
 Run:
@@ -161,4 +165,36 @@ Generate inspect/model command templates from a named dataset:
 .\.venv\Scripts\python.exe scripts\command_from_dataset.py sample_block
 ```
 
-Future registry fields should add coverage bounds, download date, and license notes.
+## 9. Run Batch Jobs (JSON)
+
+For sequential multi-area processing, prepare a JSON file with top-level `jobs`.
+
+Example:
+
+```json
+{
+  "jobs": [
+    {
+      "name": "sample_a",
+      "area": "data/areas/a.geojson",
+      "area_crs": "EPSG:4326",
+      "buildings": "data/buildings/a.shp",
+      "dem": "data/dem/a.tif",
+      "out": "output/a.stl",
+      "export_format": ["stl", "obj"],
+      "terrain_resolution": 10,
+      "z_scale": 1.2
+    }
+  ]
+}
+```
+
+Run:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_batch.py `
+  --batch batch_jobs.json `
+  --summary-out output\batch_summary.json
+```
+
+The script runs jobs one by one using the same model pipeline as `make_model.py`. Failures are recorded in the batch summary, and the process exits non-zero only after all jobs finish.

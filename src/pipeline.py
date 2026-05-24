@@ -25,6 +25,7 @@ class BuildOptions:
     default_floor_height: float
     default_building_height: float
     min_building_area: float
+    simplify_tolerance: float
     max_area_km2: float
     separate: bool
     preview: bool
@@ -62,6 +63,7 @@ def build_model(options: BuildOptions) -> dict:
         options.default_floor_height,
         options.default_building_height,
         options.min_building_area,
+        options.simplify_tolerance,
         options.height_fields,
         options.floor_fields,
         options.building_base_mode,
