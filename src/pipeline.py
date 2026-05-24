@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from src.buildings import prepare_buildings
-from src.export import export_preview_html, export_stl, export_summary
+from src.export import export_obj, export_preview_html, export_stl, export_summary
 from src.io import load_area
 from src.mesh import make_building_meshes, make_terrain_mesh, merge_meshes
 from src.mesh_quality import mesh_summary
@@ -31,15 +31,24 @@ class BuildOptions:
     height_fields: Optional[tuple[str, ...]]
     floor_fields: Optional[tuple[str, ...]]
     building_base_mode: str
+    export_formats: tuple[str, ...]
+    z_scale: float = 1.0
 
 
 def build_model(options: BuildOptions) -> dict:
     _check_inputs(options)
+    _check_options(options)
     area, area_km2 = load_area(options.area_path, options.target_crs, options.area_crs)
     if area_km2 > options.max_area_km2:
         raise ValueError(f"Selected area {area_km2:.2f} km2 exceeds limit {options.max_area_km2:.2f} km2.")
 
-    terrain_grid = sample_terrain(area, str(options.dem_path), options.target_crs, options.terrain_resolution)
+    terrain_grid = sample_terrain(
+        area,
+        str(options.dem_path),
+        options.target_crs,
+        options.terrain_resolution,
+        z_scale=options.z_scale,
+    )
     terrain_mesh = make_terrain_mesh(terrain_grid, options.base_thickness)
     dem_info = get_dem_info(str(options.dem_path), options.target_crs)
 
@@ -58,6 +67,9 @@ def build_model(options: BuildOptions) -> dict:
         options.building_base_mode,
     )
     prepared_buildings = building_result.buildings
+    if options.z_scale != 1.0:
+        for building in prepared_buildings:
+            building.base_z *= options.z_scale
     building_meshes = make_building_meshes(
         [
             (b.polygon, b.height, b.base_z, terrain_grid.origin_x, terrain_grid.origin_y)
@@ -67,11 +79,22 @@ def build_model(options: BuildOptions) -> dict:
     buildings_mesh = merge_meshes(building_meshes)
     combined_mesh = merge_meshes([terrain_mesh, buildings_mesh])
 
-    export_stl(combined_mesh, options.out_path)
-    if options.separate:
-        export_stl(terrain_mesh, options.out_path.with_name(f"{options.out_path.stem}_terrain.stl"))
+    output_paths: dict[str, str] = {}
+    if "stl" in options.export_formats:
+        export_stl(combined_mesh, options.out_path)
+        output_paths["stl"] = str(options.out_path)
+    if "obj" in options.export_formats:
+        obj_path = options.out_path.with_suffix(".obj")
+        export_obj(combined_mesh, obj_path)
+        output_paths["obj"] = str(obj_path)
+    if options.separate and "stl" in options.export_formats:
+        terrain_path = options.out_path.with_name(f"{options.out_path.stem}_terrain.stl")
+        export_stl(terrain_mesh, terrain_path)
+        output_paths["terrain_stl"] = str(terrain_path)
         if not buildings_mesh.is_empty:
-            export_stl(buildings_mesh, options.out_path.with_name(f"{options.out_path.stem}_buildings.stl"))
+            buildings_path = options.out_path.with_name(f"{options.out_path.stem}_buildings.stl")
+            export_stl(buildings_mesh, buildings_path)
+            output_paths["buildings_stl"] = str(buildings_path)
 
     area_bounds = [float(value) for value in area.bounds]
     bounds = combined_mesh.bounds.tolist() if not combined_mesh.is_empty else []
@@ -110,7 +133,9 @@ def build_model(options: BuildOptions) -> dict:
         "faces": int(len(combined_mesh.faces)),
         "mesh_quality": mesh_summary(combined_mesh),
         "bounds": bounds,
-        "output": str(options.out_path),
+        "output": output_paths[options.export_formats[0]],
+        "outputs": output_paths,
+        "export_formats": list(options.export_formats),
     }
     summary_path = export_summary(summary, options.out_path)
     summary["summary"] = str(summary_path)
@@ -119,6 +144,13 @@ def build_model(options: BuildOptions) -> dict:
         summary["preview"] = str(preview_path)
         export_summary(summary, options.out_path)
     return summary
+
+
+def _check_options(options: BuildOptions) -> None:
+    if not options.export_formats:
+        raise ValueError("At least one export format is required.")
+    if options.preview and "stl" not in options.export_formats:
+        raise ValueError("--preview requires STL export. Include --export-format stl.")
 
 
 def _check_inputs(options: BuildOptions) -> None:

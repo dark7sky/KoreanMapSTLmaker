@@ -7,7 +7,7 @@ def main() -> None:
     parser.add_argument("--area", required=True, type=Path, help="Area polygon file, e.g. GeoJSON/SHP/GPKG.")
     parser.add_argument("--buildings", type=Path, help="Building footprints file.")
     parser.add_argument("--dem", required=True, type=Path, help="DEM GeoTIFF.")
-    parser.add_argument("--out", required=True, type=Path, help="Output STL path.")
+    parser.add_argument("--out", required=True, type=Path, help="Output model path. STL uses this path; OBJ uses the same stem.")
     parser.add_argument("--target-crs", default="EPSG:5179", help="Metric CRS used for modeling.")
     parser.add_argument("--area-crs", help="Fallback CRS when area data has none.")
     parser.add_argument("--building-crs", help="Fallback CRS when building data has none.")
@@ -15,9 +15,16 @@ def main() -> None:
     parser.add_argument("--base-thickness", type=_non_negative_float, default=2.0, help="Base thickness in meters.")
     parser.add_argument("--default-floor-height", type=_positive_float, default=3.0, help="Meters per floor fallback.")
     parser.add_argument("--default-building-height", type=_positive_float, default=6.0, help="Default building height.")
+    parser.add_argument("--z-scale", type=_positive_float, default=1.0, help="Vertical exaggeration scale factor.")
     parser.add_argument("--min-building-area", type=_non_negative_float, default=4.0, help="Drop smaller buildings, sqm.")
     parser.add_argument("--max-area-km2", type=_positive_float, default=4.0, help="Safety limit for selected area.")
     parser.add_argument("--separate", action="store_true", help="Also export terrain and buildings separately.")
+    parser.add_argument(
+        "--export-format",
+        action="append",
+        choices=("stl", "obj"),
+        help="Export format. Repeat to export multiple formats (default: stl).",
+    )
     parser.add_argument("--preview", action="store_true", help="Generate a self-contained preview HTML file.")
     parser.add_argument("--height-field", action="append", help="Preferred building height field. Can be repeated.")
     parser.add_argument("--floor-field", action="append", help="Preferred floor-count field. Can be repeated.")
@@ -30,6 +37,8 @@ def main() -> None:
     args = parser.parse_args()
 
     from src.pipeline import BuildOptions, build_model
+
+    export_formats = _normalize_export_formats(args.export_format)
 
     options = BuildOptions(
         area_path=args.area,
@@ -50,6 +59,8 @@ def main() -> None:
         height_fields=tuple(args.height_field or ()),
         floor_fields=tuple(args.floor_field or ()),
         building_base_mode=args.building_base_mode,
+        z_scale=getattr(args, "z_scale", 1.0),
+        export_formats=export_formats,
     )
     summary = build_model(options)
     print(f"Output: {summary['output']}")
@@ -71,3 +82,9 @@ def _non_negative_float(value: str) -> float:
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be 0 or greater")
     return parsed
+
+
+def _normalize_export_formats(values: list[str] | None) -> tuple[str, ...]:
+    formats = values or ["stl"]
+    # Keep order while deduplicating repeated flags.
+    return tuple(dict.fromkeys(formats))

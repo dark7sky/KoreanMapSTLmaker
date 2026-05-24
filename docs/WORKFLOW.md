@@ -104,7 +104,10 @@ Run:
   --buildings data\buildings\my_region_buildings.shp `
   --dem data\dem\my_region_dem.tif `
   --out output\my_area.stl `
+  --export-format stl `
+  --export-format obj `
   --terrain-resolution 10 `
+  --z-scale 1.5 `
   --building-base-mode representative `
   --height-field HEIGHT `
   --floor-field GRND_FLR `
@@ -112,7 +115,7 @@ Run:
   --preview
 ```
 
-Start with `--terrain-resolution 10` or `20`. Lower the value after the geometry looks correct.
+Start with `--terrain-resolution 10` or `20`. Lower the value after the geometry looks correct. Use `--z-scale` only when the terrain relief needs visual exaggeration; building heights remain in real units.
 
 ## 7. Review Output
 
@@ -129,8 +132,7 @@ output/my_area_summary.json
 ```
 
 The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, height source statistics, mesh quality, and the selected building base mode.
-
-Future repair-focused summaries should add non-manifold edge and degenerate face counts.
+Mesh quality currently includes watertight status, Euler number, volume, bounding box, non-manifold edge count, and degenerate face count.
 
 ## 8. Dataset Registry
 
@@ -142,6 +144,10 @@ Current registry fields:
 - Area path.
 - DEM path.
 - Building path.
+- Optional CRS hints.
+- Optional height and floor field preferences.
+- Optional building base mode.
+- Optional notes.
 
 Run:
 
@@ -149,4 +155,10 @@ Run:
 .\.venv\Scripts\python.exe scripts\list_datasets.py
 ```
 
-Future registry fields should add CRS hints, coverage bounds, default height/floor fields, source notes, download date, and license notes.
+Generate inspect/model command templates from a named dataset:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\command_from_dataset.py sample_block
+```
+
+Future registry fields should add coverage bounds, download date, and license notes.

@@ -13,6 +13,13 @@ def export_stl(mesh: trimesh.Trimesh, path: Path) -> None:
     mesh.export(path)
 
 
+def export_obj(mesh: trimesh.Trimesh, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if mesh.is_empty:
+        raise ValueError("Cannot export an empty mesh.")
+    mesh.export(path)
+
+
 def export_summary(summary: dict[str, Any], out_path: Path) -> Path:
     summary_path = out_path.with_name(f"{out_path.stem}_summary.json")
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

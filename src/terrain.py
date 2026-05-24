@@ -80,7 +80,9 @@ class ElevationSampler:
         return [float(value) for value in transformed]
 
 
-def sample_terrain(area: BaseGeometry, dem_path: str, target_crs: str, resolution: float) -> TerrainGrid:
+def sample_terrain(
+    area: BaseGeometry, dem_path: str, target_crs: str, resolution: float, z_scale: float = 1.0
+) -> TerrainGrid:
     sampler = ElevationSampler(dem_path, target_crs)
     try:
         minx, miny, maxx, maxy = area.bounds
@@ -127,10 +129,14 @@ def sample_terrain(area: BaseGeometry, dem_path: str, target_crs: str, resolutio
             )
 
         min_elevation = float(np.nanmin(values[valid]))
+        normalized = values - min_elevation
+        if z_scale != 1.0:
+            normalized = normalized * z_scale
+
         return TerrainGrid(
             xs=xs,
             ys=ys,
-            elevations=values - min_elevation,
+            elevations=normalized,
             valid=valid,
             min_elevation=min_elevation,
             origin_x=float(minx),

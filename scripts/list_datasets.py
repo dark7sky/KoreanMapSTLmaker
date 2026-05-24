@@ -81,7 +81,7 @@ def summarize_registry(registry_path: Path) -> dict[str, Any]:
 
 def load_registry(registry_path: Path) -> dict[str, Any]:
     try:
-        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        registry = json.loads(registry_path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as error:
         raise ValueError(f"{registry_path} is not valid JSON: {error.msg}") from error
 

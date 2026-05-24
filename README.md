@@ -68,7 +68,10 @@ Then run an end-to-end sample:
   --buildings data/sample/buildings.geojson `
   --dem data/sample/dem.tif `
   --out output/sample_model.stl `
+  --export-format stl `
+  --export-format obj `
   --terrain-resolution 10 `
+  --z-scale 1.5 `
   --building-base-mode representative `
   --separate `
   --preview
@@ -91,21 +94,26 @@ Implemented:
 - area loading and CRS conversion
 - DEM sampling over selected area
 - terrain mesh generation with base thickness
+- vertical terrain exaggeration (`--z-scale`)
 - building footprint clipping
 - building height fallback rules
 - simple building extrusion
 - combined STL export
+- optional OBJ export (`--export-format obj`)
 - summary JSON export
 - self-contained preview HTML export
 - mesh quality summary in the JSON output
+- mesh quality includes non-manifold edge and degenerate face counts
 - building base elevation modes: representative, min, mean
+- polygon holes are preserved during building extrusion
+- dataset command generation from registry entries (`scripts/command_from_dataset.py`)
 
 MVP limitations:
 
 - Terrain is sampled on a regular grid.
-- Building polygons with holes are simplified to exterior rings for extrusion.
 - Building base elevation uses a representative point by default.
 - Large areas should use coarse terrain resolution first.
+- Z-scale changes terrain and building base elevations; building heights stay in real units.
 
 Next-stage features:
 
@@ -117,6 +125,7 @@ Next-stage features:
 The tool writes:
 
 - `model.stl`
+- `model.obj` when `--export-format obj` is passed
 - `model_summary.json`
 - `model_preview.html` when `--preview` is passed
 
@@ -145,3 +154,9 @@ The workflow also describes the height/floor field selector, building base mode 
 ## Dataset Registry
 
 See `docs/DATASETS.md` for the optional `datasets.json` format and listing command.
+
+Generate inspect/model command templates for a named dataset:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\command_from_dataset.py sample_block
+```

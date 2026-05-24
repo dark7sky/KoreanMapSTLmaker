@@ -98,16 +98,18 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 9 - Dataset Management
 
 - [x] Dataset registry JSON with named area/DEM/building paths.
-- [ ] Extend dataset registry with CRS hints, coverage bounds, source notes, and default field mappings.
+- [x] Generate inspect/model command templates from dataset registry entries.
+- [x] Extend dataset registry with CRS hints, source notes, and default field mappings.
+- [ ] Extend dataset registry with coverage bounds, source dates, and license notes.
 - [ ] DEM index.
 - [ ] Building index.
 - [ ] Automatic overlap selection.
-- [ ] Registry-backed defaults for height/floor fields.
+- [x] Registry-backed defaults for height/floor fields in generated commands.
 - [ ] Cache generated outputs.
 
 ## Phase 10 - Additional Formats
 
-- [ ] OBJ export.
+- [x] OBJ export.
 - [ ] GLB/GLTF export.
 - [ ] Material separation for visual formats.
 - [ ] Blender import helper.

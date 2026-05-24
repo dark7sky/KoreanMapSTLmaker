@@ -104,6 +104,29 @@ def test_summarize_registry_includes_optional_metadata_when_present(tmp_path):
     }
 
 
+def test_load_registry_accepts_utf8_bom(tmp_path):
+    registry_path = tmp_path / "datasets.json"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {
+                        "name": "sample",
+                        "area": "area.geojson",
+                        "dem": "dem.tif",
+                        "buildings": "buildings.geojson",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8-sig",
+    )
+
+    registry = list_datasets.load_registry(registry_path)
+
+    assert registry["datasets"][0]["name"] == "sample"
+
+
 @pytest.mark.parametrize(
     ("registry", "message"),
     [
