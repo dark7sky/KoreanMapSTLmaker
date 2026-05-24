@@ -63,8 +63,8 @@ def test_optional_quality_values_can_be_missing():
         "is_watertight": False,
         "euler_number": None,
         "volume": None,
-        "non_manifold_edge_count": None,
-        "degenerate_face_count": None,
+        "non_manifold_edge_count": 0,
+        "degenerate_face_count": 0,
     }
 
 
@@ -111,8 +111,8 @@ def test_optional_quality_properties_that_raise_are_ignored():
         "is_watertight": False,
         "euler_number": None,
         "volume": None,
-        "non_manifold_edge_count": None,
-        "degenerate_face_count": None,
+        "non_manifold_edge_count": 0,
+        "degenerate_face_count": 1,
     }
 
 
@@ -125,7 +125,12 @@ def test_mesh_quality_non_manifold_and_degenerate():
     mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
 
     assert degenerate_face_count(mesh) == 1
-    # For a non-manifold edge, our test checks if any unique edge has > 2 face connections.
-    # In this tiny 2-face mesh with a degenerate face, one of the edges will be counted.
-    assert non_manifold_edge_count(mesh) == 1
+    assert non_manifold_edge_count(mesh) == 4
 
+
+def test_non_manifold_edge_count_includes_boundary_edges():
+    class OpenTriangleMesh:
+        vertices = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+        faces = [(0, 1, 2)]
+
+    assert non_manifold_edge_count(OpenTriangleMesh()) == 3

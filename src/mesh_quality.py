@@ -72,13 +72,45 @@ def volume(mesh: Any) -> float | None:
 
 
 def non_manifold_edge_count(mesh: Any) -> int | None:
-    """Return the number of non-manifold edges (shared by more than 2 faces)."""
+    """Return the number of edges not shared by exactly 2 faces."""
     edges_unique_inverse = _safe_getattr(mesh, "edges_unique_inverse")
-    if edges_unique_inverse is None:
+    if edges_unique_inverse is not None:
+        try:
+            inverse = np.asarray(edges_unique_inverse, dtype=np.int64).reshape(-1)
+            if inverse.size == 0:
+                return 0
+            if np.any(inverse < 0):
+                return None
+            edge_counts = np.bincount(inverse)
+            edge_counts = edge_counts[edge_counts > 0]
+            return int(np.sum(edge_counts != 2))
+        except Exception:
+            return None
+
+    faces = _safe_getattr(mesh, "faces")
+    if faces is None:
         return None
     try:
-        edge_counts = np.bincount(edges_unique_inverse)
-        return int(np.sum(edge_counts > 2))
+        face_array = np.asarray(faces, dtype=np.int64)
+        if face_array.size == 0:
+            return 0
+        if face_array.ndim != 2 or face_array.shape[1] != 3:
+            return None
+        undirected_edges = np.sort(
+            np.vstack(
+                (
+                    face_array[:, [0, 1]],
+                    face_array[:, [1, 2]],
+                    face_array[:, [2, 0]],
+                )
+            ),
+            axis=1,
+        )
+        undirected_edges = undirected_edges[undirected_edges[:, 0] != undirected_edges[:, 1]]
+        if undirected_edges.size == 0:
+            return 0
+        _, counts = np.unique(undirected_edges, axis=0, return_counts=True)
+        return int(np.sum(counts != 2))
     except Exception:
         return None
 
@@ -86,14 +118,43 @@ def non_manifold_edge_count(mesh: Any) -> int | None:
 def degenerate_face_count(mesh: Any) -> int | None:
     """Return the number of degenerate faces."""
     nondegenerate_mask = _safe_getattr(mesh, "nondegenerate_faces")
-    if nondegenerate_mask is None:
+    if nondegenerate_mask is not None:
+        try:
+            if callable(nondegenerate_mask):
+                mask = nondegenerate_mask()
+            else:
+                mask = nondegenerate_mask
+            mask_array = np.asarray(mask, dtype=bool).reshape(-1)
+            faces_len = face_count(mesh)
+            if mask_array.size != faces_len:
+                return None
+            return int(faces_len - np.count_nonzero(mask_array))
+        except Exception:
+            return None
+
+    vertices = _safe_getattr(mesh, "vertices")
+    faces = _safe_getattr(mesh, "faces")
+    if vertices is None or faces is None:
         return None
     try:
-        if callable(nondegenerate_mask):
-            mask = nondegenerate_mask()
-        else:
-            mask = nondegenerate_mask
-        return int(len(getattr(mesh, "faces", ())) - np.count_nonzero(mask))
+        vertex_array = np.asarray(vertices, dtype=float)
+        face_array = np.asarray(faces, dtype=np.int64)
+        if face_array.size == 0:
+            return 0
+        if (
+            vertex_array.ndim != 2
+            or vertex_array.shape[1] != 3
+            or face_array.ndim != 2
+            or face_array.shape[1] != 3
+        ):
+            return None
+        if np.any(face_array < 0) or np.any(face_array >= len(vertex_array)):
+            return None
+        tri = vertex_array[face_array]
+        cross = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+        area2 = np.linalg.norm(cross, axis=1)
+        eps = np.finfo(float).eps
+        return int(np.count_nonzero(area2 <= eps))
     except Exception:
         return None
 
@@ -118,4 +179,3 @@ def _safe_getattr(mesh: Any, name: str, default: Any = None) -> Any:
         return getattr(mesh, name, default)
     except (AttributeError, TypeError, ValueError):
         return default
-

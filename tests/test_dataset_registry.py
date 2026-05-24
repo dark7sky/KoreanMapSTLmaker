@@ -68,6 +68,42 @@ def test_summarize_registry_validates_and_reports_paths(tmp_path):
     ]
 
 
+def test_summarize_registry_includes_optional_metadata_when_present(tmp_path):
+    registry_path = tmp_path / "datasets.json"
+    write_registry(
+        registry_path,
+        {
+            "datasets": [
+                {
+                    "name": "sample",
+                    "area": "area.geojson",
+                    "dem": "dem.tif",
+                    "buildings": "buildings.geojson",
+                    "target_crs": "EPSG:32652",
+                    "area_crs": "EPSG:4326",
+                    "building_crs": "EPSG:5186",
+                    "height_fields": ["height_m", "hgt"],
+                    "floor_fields": ["floors", "stories"],
+                    "building_base_mode": "min",
+                    "notes": "prefers rooftop height over eave height",
+                }
+            ]
+        },
+    )
+
+    summary = list_datasets.summarize_registry(registry_path)
+
+    assert summary["datasets"][0]["metadata"] == {
+        "target_crs": "EPSG:32652",
+        "area_crs": "EPSG:4326",
+        "building_crs": "EPSG:5186",
+        "height_fields": ["height_m", "hgt"],
+        "floor_fields": ["floors", "stories"],
+        "building_base_mode": "min",
+        "notes": "prefers rooftop height over eave height",
+    }
+
+
 @pytest.mark.parametrize(
     ("registry", "message"),
     [
@@ -84,6 +120,54 @@ def test_summarize_registry_validates_and_reports_paths(tmp_path):
                 ]
             },
             "duplicates",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "target_crs": 32652}]},
+            "datasets[0].target_crs",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "area_crs": ""}]},
+            "datasets[0].area_crs",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "building_crs": 5186}]},
+            "datasets[0].building_crs",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "height_fields": "height"}
+                ]
+            },
+            "datasets[0].height_fields",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "floor_fields": ["", "floors"]}
+                ]
+            },
+            "datasets[0].floor_fields",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "building_base_mode": ""}
+                ]
+            },
+            "datasets[0].building_base_mode",
+        ),
+        (
+            {"datasets": [{"name": "sample", "area": "a", "dem": "d", "buildings": "b", "notes": 123}]},
+            "datasets[0].notes",
+        ),
+        (
+            {
+                "datasets": [
+                    {"name": "sample", "area": "a", "dem": "d", "buildings": "b", "building_base_mode": "dem_min"}
+                ]
+            },
+            "datasets[0].building_base_mode",
         ),
     ],
 )

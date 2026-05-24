@@ -36,6 +36,16 @@ conda activate terrain-stl
 conda install -c conda-forge geopandas rasterio shapely pyproj trimesh numpy pytest
 ```
 
+## Tests
+
+Run tests from the local virtual environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Pytest is configured to use a workspace-local temporary base directory (`.pytest_tmp`) for more reliable execution on Windows.
+
 ## Generate Sample Data
 
 The sample area is committed as GeoJSON. Generate the sample DEM and buildings:

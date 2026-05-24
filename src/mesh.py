@@ -97,7 +97,7 @@ def extrude_polygon_simple(
     if polygon.is_empty or polygon.area <= 0:
         return trimesh.Trimesh()
 
-    triangles = [t for t in triangulate(polygon) if polygon.contains(t.representative_point())]
+    triangles = [t for t in triangulate(polygon) if polygon.covers(t)]
     vertices: list[tuple[float, float, float]] = []
     faces: list[tuple[int, int, int]] = []
     vertex_map: dict[tuple[float, float, float], int] = {}

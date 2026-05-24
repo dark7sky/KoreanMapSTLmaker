@@ -5,6 +5,16 @@ from typing import Any
 
 
 DATASET_PATH_FIELDS = ("area", "dem", "buildings")
+OPTIONAL_DATASET_FIELDS = (
+    "target_crs",
+    "area_crs",
+    "building_crs",
+    "height_fields",
+    "floor_fields",
+    "building_base_mode",
+    "notes",
+)
+BUILDING_BASE_MODES = ("representative", "min", "mean")
 
 
 def main() -> None:
@@ -47,13 +57,19 @@ def summarize_registry(registry_path: Path) -> dict[str, Any]:
             for field, path in paths.items()
             if not Path(path).exists()
         ]
-        datasets.append(
-            {
-                "name": dataset["name"],
-                "paths": paths,
-                "missing_paths": missing_paths,
-            }
-        )
+        summary_entry = {
+            "name": dataset["name"],
+            "paths": paths,
+            "missing_paths": missing_paths,
+        }
+        metadata = {
+            field: dataset[field]
+            for field in OPTIONAL_DATASET_FIELDS
+            if field in dataset
+        }
+        if metadata:
+            summary_entry["metadata"] = metadata
+        datasets.append(summary_entry)
 
     return {
         "registry": str(registry_path),
@@ -98,6 +114,26 @@ def validate_registry(registry: Any, registry_path: Path) -> None:
             value = dataset.get(field)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"{label}.{field} must be a non-empty string path")
+
+        for field in ("target_crs", "area_crs", "building_crs", "notes"):
+            if field in dataset:
+                value = dataset[field]
+                if not isinstance(value, str) or not value.strip():
+                    raise ValueError(f"{label}.{field} must be a non-empty string")
+
+        if "building_base_mode" in dataset:
+            value = dataset["building_base_mode"]
+            if value not in BUILDING_BASE_MODES:
+                raise ValueError(f"{label}.building_base_mode must be one of: {', '.join(BUILDING_BASE_MODES)}")
+
+        for field in ("height_fields", "floor_fields"):
+            if field in dataset:
+                value = dataset[field]
+                if not isinstance(value, list) or not value:
+                    raise ValueError(f"{label}.{field} must be a non-empty list of strings")
+                for item in value:
+                    if not isinstance(item, str) or not item.strip():
+                        raise ValueError(f"{label}.{field} must be a non-empty list of strings")
 
 
 if __name__ == "__main__":
