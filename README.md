@@ -78,6 +78,7 @@ Then run an end-to-end sample:
   --model-scale 1.0 `
   --base-plate-thickness 1.0 `
   --base-plate-margin 3.0 `
+  --building-diagnostics-limit 200 `
   --building-base-mode representative `
   --separate `
   --preview
@@ -123,6 +124,7 @@ Implemented:
 - self-contained preview HTML export
 - mesh quality summary in the JSON output
 - mesh quality includes non-manifold edge and degenerate face counts
+- per-building diagnostics in the JSON output
 - normal cleanup before export
 - standalone mesh repair command for STL/OBJ (`scripts/repair_mesh.py`)
 - building base elevation modes: representative, min, mean

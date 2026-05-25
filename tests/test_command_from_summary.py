@@ -33,6 +33,7 @@ def test_build_command_from_summary_options(tmp_path):
                     "base_plate_thickness": 1.0,
                     "base_plate_margin": 2.0,
                     "max_area_km2": 4.0,
+                    "building_diagnostics_limit": 12,
                     "separate": True,
                     "preview": False,
                     "height_fields": ["HEIGHT"],
@@ -59,6 +60,7 @@ def test_build_command_from_summary_options(tmp_path):
     assert "--model-scale 0.5" in command
     assert "--base-plate-thickness 1.0" in command
     assert "--base-plate-margin 2.0" in command
+    assert "--building-diagnostics-limit 12" in command
     assert "--z-scale 1.5" in command
     assert "--height-field HEIGHT" in command
     assert "--floor-field GRND_FLR" in command

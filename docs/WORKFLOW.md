@@ -114,6 +114,7 @@ Run:
   --model-scale 1.0 `
   --base-plate-thickness 1.0 `
   --base-plate-margin 3.0 `
+  --building-diagnostics-limit 200 `
   --building-base-mode representative `
   --height-field HEIGHT `
   --floor-field GRND_FLR `
@@ -137,7 +138,7 @@ Also check:
 output/my_area_summary.json
 ```
 
-The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
+The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, per-building diagnostics up to `--building-diagnostics-limit`, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
 Mesh quality currently includes watertight status, Euler number, volume, bounding box, non-manifold edge count, and degenerate face count.
 
 Print a rerun command from a saved model summary:

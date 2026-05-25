@@ -23,6 +23,15 @@ class _FakeMesh:
         self.bounds = _FakeBounds([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
 
 
+class _FakePolygon:
+    area = 12.5
+    bounds = (1.0, 2.0, 3.0, 4.0)
+
+    @staticmethod
+    def representative_point():
+        return type("Point", (), {"x": 2.0, "y": 3.0})()
+
+
 def test_cli_default_export_format_is_stl(monkeypatch):
     captured = {}
 
@@ -47,6 +56,7 @@ def test_cli_default_export_format_is_stl(monkeypatch):
             base_plate_thickness=0.0,
             base_plate_margin=0.0,
             max_area_km2=4.0,
+            building_diagnostics_limit=200,
             separate=False,
             export_format=None,
             preview=False,
@@ -92,6 +102,7 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
             base_plate_thickness=0.0,
             base_plate_margin=0.0,
             max_area_km2=4.0,
+            building_diagnostics_limit=200,
             separate=False,
             export_format=None,
             preview=False,
@@ -136,6 +147,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
             base_plate_thickness=1.2,
             base_plate_margin=3.4,
             max_area_km2=4.0,
+            building_diagnostics_limit=12,
             separate=False,
             export_format=None,
             preview=False,
@@ -150,6 +162,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
         captured["base_plate_margin"] = options.base_plate_margin
         captured["terrain_smoothing_iterations"] = options.terrain_smoothing_iterations
         captured["terrain_smoothing_factor"] = options.terrain_smoothing_factor
+        captured["building_diagnostics_limit"] = options.building_diagnostics_limit
         return {"output": "model.stl", "building_count": 0, "faces": 0}
 
     monkeypatch.setattr(src.cli.argparse.ArgumentParser, "parse_args", fake_parse_args)
@@ -163,6 +176,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
         "base_plate_margin": 3.4,
         "terrain_smoothing_iterations": 2,
         "terrain_smoothing_factor": 0.25,
+        "building_diagnostics_limit": 12,
     }
 
 
@@ -186,7 +200,10 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         origin_y = 0.0
 
     class _BuildingResult:
-        buildings = []
+        buildings = [
+            type("Building", (), {"polygon": _FakePolygon(), "height": 10.0, "base_z": 1.5, "source": "HEIGHT"})(),
+            type("Building", (), {"polygon": _FakePolygon(), "height": 6.0, "base_z": 0.5, "source": "default"})(),
+        ]
         source_feature_count = 0
         intersect_feature_count = 0
         clipped_polygon_count = 0
@@ -252,6 +269,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         base_plate_thickness=0.0,
         base_plate_margin=0.0,
         max_area_km2=4.0,
+        building_diagnostics_limit=1,
         separate=True,
         preview=False,
         height_fields=(),
@@ -272,6 +290,20 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     assert summary["options"]["out"] == str(tmp_path / "model.stl")
     assert summary["options"]["export_formats"] == ["obj", "glb"]
     assert summary["options"]["simplify_tolerance"] == 0.0
+    diagnostics = summary["building_diagnostics"]
+    assert diagnostics["per_building_limit"] == 1
+    assert diagnostics["per_building_omitted_count"] == 1
+    assert diagnostics["per_building"] == [
+        {
+            "index": 0,
+            "height": 10.0,
+            "base_z": 1.5,
+            "source": "HEIGHT",
+            "area": 12.5,
+            "bounds": [1.0, 2.0, 3.0, 4.0],
+            "representative_point": [2.0, 3.0],
+        }
+    ]
 
 
 def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp_path):
@@ -295,6 +327,7 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
         base_plate_thickness=0.0,
         base_plate_margin=0.0,
         max_area_km2=4.0,
+        building_diagnostics_limit=200,
         separate=False,
         preview=True,
         height_fields=(),

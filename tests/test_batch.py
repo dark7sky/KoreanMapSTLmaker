@@ -38,6 +38,7 @@ def test_build_options_from_job_maps_cli_like_fields():
             "model_scale": 0.75,
             "base_plate_thickness": 1.25,
             "base_plate_margin": 2.5,
+            "building_diagnostics_limit": 12,
             "separate": True,
         },
         0,
@@ -56,6 +57,7 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.model_scale == 0.75
     assert options.base_plate_thickness == 1.25
     assert options.base_plate_margin == 2.5
+    assert options.building_diagnostics_limit == 12
     assert options.separate is True
 
 

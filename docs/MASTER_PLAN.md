@@ -43,7 +43,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Add footprint simplification option.
 - [x] Add building base mode selector: representative/min/mean.
 - [ ] Add sloped terrain policy for building base.
-- [ ] Add per-building diagnostics.
+- [x] Add per-building diagnostics.
 - [x] Report selected base elevation mode in summary JSON.
 
 ## Phase 4 - Terrain Modeling

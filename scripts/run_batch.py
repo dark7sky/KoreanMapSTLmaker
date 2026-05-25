@@ -130,6 +130,7 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         base_plate_thickness=_get_float(job, "base_plate_thickness", 0.0),
         base_plate_margin=_get_float(job, "base_plate_margin", 0.0),
         max_area_km2=_get_float(job, "max_area_km2", 4.0),
+        building_diagnostics_limit=_get_int(job, "building_diagnostics_limit", 200),
         separate=_get_bool(job, "separate", False),
         preview=_get_bool(job, "preview", False),
         height_fields=_get_tuple_of_strings(job, "height_field"),

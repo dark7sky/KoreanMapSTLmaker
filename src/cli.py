@@ -49,6 +49,12 @@ def main() -> None:
         help="XY margin around the model when --base-plate-thickness is greater than 0.",
     )
     parser.add_argument("--max-area-km2", type=_positive_float, default=4.0, help="Safety limit for selected area.")
+    parser.add_argument(
+        "--building-diagnostics-limit",
+        type=_non_negative_int,
+        default=200,
+        help="Maximum number of per-building diagnostic records in the summary JSON.",
+    )
     parser.add_argument("--separate", action="store_true", help="Also export terrain and buildings separately.")
     parser.add_argument(
         "--export-format",
@@ -91,6 +97,7 @@ def main() -> None:
         base_plate_thickness=args.base_plate_thickness,
         base_plate_margin=args.base_plate_margin,
         max_area_km2=args.max_area_km2,
+        building_diagnostics_limit=args.building_diagnostics_limit,
         separate=args.separate,
         preview=args.preview,
         height_fields=tuple(args.height_field or ()),

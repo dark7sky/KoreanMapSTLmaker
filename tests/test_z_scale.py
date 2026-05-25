@@ -77,7 +77,7 @@ def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
         pipeline,
         "prepare_buildings",
         lambda *_args, **_kwargs: SimpleNamespace(
-            buildings=[SimpleNamespace(polygon=area, height=7.0, base_z=3.0)],
+            buildings=[SimpleNamespace(polygon=area, height=7.0, base_z=3.0, source="height")],
             height_counts=Counter({"height": 1}),
             source_feature_count=1,
             intersect_feature_count=1,
@@ -127,6 +127,7 @@ def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
         base_plate_thickness=0.0,
         base_plate_margin=0.0,
         max_area_km2=10.0,
+        building_diagnostics_limit=200,
         separate=False,
         preview=False,
         height_fields=(),

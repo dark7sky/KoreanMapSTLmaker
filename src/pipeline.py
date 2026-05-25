@@ -32,6 +32,7 @@ class BuildOptions:
     base_plate_thickness: float
     base_plate_margin: float
     max_area_km2: float
+    building_diagnostics_limit: int
     separate: bool
     preview: bool
     height_fields: Optional[tuple[str, ...]]
@@ -151,6 +152,9 @@ def build_model(options: BuildOptions) -> dict:
             "skipped_small_count": building_result.skipped_small_count,
             "skipped_no_elevation_count": building_result.skipped_no_elevation_count,
             "fields": building_result.fields,
+            "per_building_limit": options.building_diagnostics_limit,
+            "per_building_omitted_count": max(0, len(prepared_buildings) - options.building_diagnostics_limit),
+            "per_building": _building_diagnostics(prepared_buildings, options.building_diagnostics_limit),
         },
         "building_height_source": dict(Counter(building_result.height_counts)),
         "height_fields": list(options.height_fields or ()),
@@ -189,6 +193,8 @@ def _check_options(options: BuildOptions) -> None:
         raise ValueError("terrain_smoothing_iterations must be 0 or greater.")
     if not 0 <= options.terrain_smoothing_factor <= 1:
         raise ValueError("terrain_smoothing_factor must be between 0 and 1.")
+    if options.building_diagnostics_limit < 0:
+        raise ValueError("building_diagnostics_limit must be 0 or greater.")
 
 
 def _check_inputs(options: BuildOptions) -> None:
@@ -221,6 +227,7 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "base_plate_thickness": options.base_plate_thickness,
         "base_plate_margin": options.base_plate_margin,
         "max_area_km2": options.max_area_km2,
+        "building_diagnostics_limit": options.building_diagnostics_limit,
         "separate": options.separate,
         "preview": options.preview,
         "height_fields": list(options.height_fields or ()),
@@ -229,3 +236,22 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "export_formats": list(options.export_formats),
         "z_scale": options.z_scale,
     }
+
+
+def _building_diagnostics(buildings: list, limit: int) -> list[dict[str, object]]:
+    diagnostics = []
+    for index, building in enumerate(buildings[:limit]):
+        polygon = building.polygon
+        point = polygon.representative_point()
+        diagnostics.append(
+            {
+                "index": index,
+                "height": float(building.height),
+                "base_z": float(building.base_z),
+                "source": building.source,
+                "area": float(polygon.area),
+                "bounds": [float(value) for value in polygon.bounds],
+                "representative_point": [float(point.x), float(point.y)],
+            }
+        )
+    return diagnostics
