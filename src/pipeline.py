@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from src.buildings import prepare_buildings
-from src.export import cleanup_normals, export_glb, export_obj, export_preview_html, export_stl, export_summary
+from src.export import cleanup_normals, export_glb, export_gltf, export_obj, export_preview_html, export_stl, export_summary
 from src.io import load_area
 from src.mesh import add_base_plate, make_building_meshes, make_terrain_mesh, merge_meshes, scale_mesh
 from src.mesh_quality import mesh_summary
@@ -23,6 +23,7 @@ class BuildOptions:
     terrain_resolution: float
     terrain_smoothing_iterations: int
     terrain_smoothing_factor: float
+    interpolate_nodata: bool
     base_thickness: float
     default_floor_height: float
     default_building_height: float
@@ -57,6 +58,7 @@ def build_model(options: BuildOptions) -> dict:
         z_scale=options.z_scale,
         smoothing_iterations=options.terrain_smoothing_iterations,
         smoothing_factor=options.terrain_smoothing_factor,
+        interpolate_nodata=options.interpolate_nodata,
     )
     terrain_mesh = make_terrain_mesh(terrain_grid, options.base_thickness)
     dem_info = get_dem_info(str(options.dem_path), options.target_crs)
@@ -108,6 +110,10 @@ def build_model(options: BuildOptions) -> dict:
         glb_path = options.out_path.with_suffix(".glb")
         export_glb(combined_mesh, glb_path)
         output_paths["glb"] = str(glb_path)
+    if "gltf" in options.export_formats:
+        gltf_path = options.out_path.with_suffix(".gltf")
+        export_gltf(combined_mesh, gltf_path)
+        output_paths["gltf"] = str(gltf_path)
     if options.separate and "stl" in options.export_formats:
         terrain_path = options.out_path.with_name(f"{options.out_path.stem}_terrain.stl")
         terrain_export_mesh = scale_mesh(terrain_mesh, options.model_scale)
@@ -140,8 +146,10 @@ def build_model(options: BuildOptions) -> dict:
         "terrain_resolution_m": options.terrain_resolution,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
+        "terrain_interpolate_nodata": options.interpolate_nodata,
         "terrain_samples": [int(terrain_grid.elevations.shape[1]), int(terrain_grid.elevations.shape[0])],
         "terrain_valid_samples": int(terrain_grid.valid.sum()),
+        "terrain_filled_nodata_samples": int(getattr(terrain_grid, "filled_nodata_samples", 0)),
         "min_elevation_m": terrain_grid.min_elevation,
         "building_count": len(prepared_buildings),
         "building_base_mode": options.building_base_mode,
@@ -218,6 +226,7 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "terrain_resolution": options.terrain_resolution,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
+        "interpolate_nodata": options.interpolate_nodata,
         "base_thickness": options.base_thickness,
         "default_floor_height": options.default_floor_height,
         "default_building_height": options.default_building_height,

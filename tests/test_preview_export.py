@@ -23,7 +23,7 @@ def test_preview_html_includes_structured_summary_panel(tmp_path):
     assert '["Terrain resolution", `${summary.terrain_resolution_m ?? 0} m`]' in html
     assert "escapeHtml(value)" in html
     assert "escapeAttribute(toFileHref(String(pathValue)))" in html
-    assert '.filter(([key]) => key === "obj" || key === "glb" || key.endsWith("_stl"))' in html
+    assert '.filter(([key]) => key === "obj" || key === "glb" || key === "gltf" || key.endsWith("_stl"))' in html
 
 
 def test_preview_html_lists_clickable_obj_and_separate_stl_outputs(tmp_path):
@@ -40,6 +40,7 @@ def test_preview_html_lists_clickable_obj_and_separate_stl_outputs(tmp_path):
             "stl": str(stl_path),
             "obj": str(tmp_path / "model.obj"),
             "glb": str(tmp_path / "model.glb"),
+            "gltf": str(tmp_path / "model.gltf"),
             "terrain_stl": str(tmp_path / "model_terrain.stl"),
             "buildings_stl": str(tmp_path / "model_buildings.stl"),
         },
@@ -51,6 +52,7 @@ def test_preview_html_lists_clickable_obj_and_separate_stl_outputs(tmp_path):
     assert "Output files" in html
     assert "model.obj" in html
     assert "model.glb" in html
+    assert "model.gltf" in html
     assert "model_terrain.stl" in html
     assert "model_buildings.stl" in html
     assert "file:///" in html

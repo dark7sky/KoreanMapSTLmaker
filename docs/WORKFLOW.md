@@ -107,7 +107,9 @@ Run:
   --export-format stl `
   --export-format obj `
   --export-format glb `
+  --export-format gltf `
   --terrain-resolution 10 `
+  --interpolate-nodata `
   --terrain-smoothing-iterations 1 `
   --terrain-smoothing-factor 0.4 `
   --z-scale 1.5 `
@@ -122,7 +124,7 @@ Run:
   --preview
 ```
 
-Start with `--terrain-resolution 10` or `20`. Lower the value after the geometry looks correct. Use terrain smoothing sparingly to reduce noisy DEM spikes. Use `--z-scale` only when the terrain relief needs visual exaggeration; building heights remain in real units. Use `--model-scale` for final print scaling, and add a base plate when the model needs a larger flat bottom for slicing.
+Start with `--terrain-resolution 10` or `20`. Lower the value after the geometry looks correct. Add `--interpolate-nodata` when small DEM gaps produce holes inside the selected terrain. Use terrain smoothing sparingly to reduce noisy DEM spikes. Use `--z-scale` only when the terrain relief needs visual exaggeration; building heights remain in real units. Use `--model-scale` for final print scaling, and add a base plate when the model needs a larger flat bottom for slicing.
 
 ## 7. Review Output
 
@@ -138,7 +140,7 @@ Also check:
 output/my_area_summary.json
 ```
 
-The summary contains DEM bounds, valid terrain samples, building counts, skipped buildings, per-building diagnostics up to `--building-diagnostics-limit`, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
+The summary contains DEM bounds, valid terrain samples, interpolated nodata sample counts, building counts, skipped buildings, per-building diagnostics up to `--building-diagnostics-limit`, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
 Mesh quality currently includes watertight status, Euler number, volume, bounding box, non-manifold edge count, and degenerate face count.
 
 Print a rerun command from a saved model summary:
@@ -206,6 +208,7 @@ Example:
       "out": "output/a.stl",
       "export_format": ["stl", "obj"],
       "terrain_resolution": 10,
+      "interpolate_nodata": true,
       "z_scale": 1.2
     }
   ]

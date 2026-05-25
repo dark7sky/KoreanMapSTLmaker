@@ -47,6 +47,7 @@ def test_cli_default_export_format_is_stl(monkeypatch):
             terrain_resolution=10.0,
             terrain_smoothing_iterations=0,
             terrain_smoothing_factor=0.5,
+            interpolate_nodata=False,
             base_thickness=2.0,
             default_floor_height=3.0,
             default_building_height=6.0,
@@ -75,7 +76,7 @@ def test_cli_default_export_format_is_stl(monkeypatch):
     src.cli.main()
 
     assert captured["formats"] == ("stl",)
-    assert src.cli._normalize_export_formats(["stl", "obj", "glb", "stl"]) == ("stl", "obj", "glb")
+    assert src.cli._normalize_export_formats(["stl", "obj", "glb", "gltf", "stl"]) == ("stl", "obj", "glb", "gltf")
 
 
 def test_cli_passes_simplify_tolerance(monkeypatch):
@@ -93,6 +94,7 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
             terrain_resolution=10.0,
             terrain_smoothing_iterations=0,
             terrain_smoothing_factor=0.5,
+            interpolate_nodata=False,
             base_thickness=2.0,
             default_floor_height=3.0,
             default_building_height=6.0,
@@ -138,6 +140,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
             terrain_resolution=10.0,
             terrain_smoothing_iterations=2,
             terrain_smoothing_factor=0.25,
+            interpolate_nodata=True,
             base_thickness=2.0,
             default_floor_height=3.0,
             default_building_height=6.0,
@@ -162,6 +165,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
         captured["base_plate_margin"] = options.base_plate_margin
         captured["terrain_smoothing_iterations"] = options.terrain_smoothing_iterations
         captured["terrain_smoothing_factor"] = options.terrain_smoothing_factor
+        captured["interpolate_nodata"] = options.interpolate_nodata
         captured["building_diagnostics_limit"] = options.building_diagnostics_limit
         return {"output": "model.stl", "building_count": 0, "faces": 0}
 
@@ -176,6 +180,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
         "base_plate_margin": 3.4,
         "terrain_smoothing_iterations": 2,
         "terrain_smoothing_factor": 0.25,
+        "interpolate_nodata": True,
         "building_diagnostics_limit": 12,
     }
 
@@ -187,6 +192,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     export_stl_calls = []
     export_obj_calls = []
     export_glb_calls = []
+    export_gltf_calls = []
     merge_call_count = {"count": 0}
 
     class _Area:
@@ -248,6 +254,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     monkeypatch.setattr(src.pipeline, "export_stl", lambda mesh, path: export_stl_calls.append(path))
     monkeypatch.setattr(src.pipeline, "export_obj", lambda mesh, path: export_obj_calls.append(path))
     monkeypatch.setattr(src.pipeline, "export_glb", lambda mesh, path: export_glb_calls.append(path))
+    monkeypatch.setattr(src.pipeline, "export_gltf", lambda mesh, path: export_gltf_calls.append(path))
 
     options = src.pipeline.BuildOptions(
         area_path=tmp_path / "area.geojson",
@@ -260,6 +267,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         terrain_resolution=10.0,
         terrain_smoothing_iterations=0,
         terrain_smoothing_factor=0.5,
+        interpolate_nodata=True,
         base_thickness=2.0,
         default_floor_height=3.0,
         default_building_height=6.0,
@@ -275,7 +283,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         height_fields=(),
         floor_fields=(),
         building_base_mode="representative",
-        export_formats=("obj", "glb"),
+        export_formats=("obj", "glb", "gltf"),
     )
     options.area_path.write_text("{}", encoding="utf-8")
     options.dem_path.write_text("dem", encoding="utf-8")
@@ -285,11 +293,18 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     assert export_stl_calls == []
     assert export_obj_calls == [tmp_path / "model.obj"]
     assert export_glb_calls == [tmp_path / "model.glb"]
+    assert export_gltf_calls == [tmp_path / "model.gltf"]
     assert summary["output"] == str(tmp_path / "model.obj")
-    assert summary["outputs"] == {"obj": str(tmp_path / "model.obj"), "glb": str(tmp_path / "model.glb")}
+    assert summary["outputs"] == {
+        "obj": str(tmp_path / "model.obj"),
+        "glb": str(tmp_path / "model.glb"),
+        "gltf": str(tmp_path / "model.gltf"),
+    }
     assert summary["options"]["out"] == str(tmp_path / "model.stl")
-    assert summary["options"]["export_formats"] == ["obj", "glb"]
+    assert summary["options"]["export_formats"] == ["obj", "glb", "gltf"]
     assert summary["options"]["simplify_tolerance"] == 0.0
+    assert summary["options"]["interpolate_nodata"] is True
+    assert summary["terrain_interpolate_nodata"] is True
     diagnostics = summary["building_diagnostics"]
     assert diagnostics["per_building_limit"] == 1
     assert diagnostics["per_building_omitted_count"] == 1
@@ -318,6 +333,7 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
         terrain_resolution=10.0,
         terrain_smoothing_iterations=0,
         terrain_smoothing_factor=0.5,
+        interpolate_nodata=False,
         base_thickness=2.0,
         default_floor_height=3.0,
         default_building_height=6.0,

@@ -84,3 +84,5 @@ The command validates that:
 
 The JSON summary reports the resolved path for each dataset input, lists any missing path fields in `missing_paths`, and includes a `metadata` object when optional fields are present.
 Dataset selection expects `coverage_bounds` to use the same CRS as `--target-crs`.
+
+After a dataset is selected, add run-specific generation options such as `--export-format gltf`, `--interpolate-nodata`, smoothing, scale, and base plate flags to the printed `make_model.py` command as needed.

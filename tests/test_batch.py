@@ -29,12 +29,13 @@ def test_build_options_from_job_maps_cli_like_fields():
             "dem": "data/dem/a.tif",
             "buildings": "data/buildings/a.geojson",
             "out": "output/a.stl",
-            "export_format": ["stl", "obj", "glb", "stl"],
+            "export_format": ["stl", "obj", "glb", "gltf", "stl"],
             "height_field": ["HEIGHT", "height_m"],
             "floor_field": ["GRND_FLR"],
             "z_scale": 1.5,
             "terrain_smoothing_iterations": 2,
             "terrain_smoothing_factor": 0.25,
+            "interpolate_nodata": True,
             "model_scale": 0.75,
             "base_plate_thickness": 1.25,
             "base_plate_margin": 2.5,
@@ -48,12 +49,13 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.dem_path == Path("data/dem/a.tif")
     assert options.buildings_path == Path("data/buildings/a.geojson")
     assert options.out_path == Path("output/a.stl")
-    assert options.export_formats == ("stl", "obj", "glb")
+    assert options.export_formats == ("stl", "obj", "glb", "gltf")
     assert options.height_fields == ("HEIGHT", "height_m")
     assert options.floor_fields == ("GRND_FLR",)
     assert options.z_scale == 1.5
     assert options.terrain_smoothing_iterations == 2
     assert options.terrain_smoothing_factor == 0.25
+    assert options.interpolate_nodata is True
     assert options.model_scale == 0.75
     assert options.base_plate_thickness == 1.25
     assert options.base_plate_margin == 2.5

@@ -18,6 +18,7 @@ class TerrainGrid:
     min_elevation: float
     origin_x: float
     origin_y: float
+    filled_nodata_samples: int = 0
 
 
 @dataclass
@@ -88,6 +89,7 @@ def sample_terrain(
     z_scale: float = 1.0,
     smoothing_iterations: int = 0,
     smoothing_factor: float = 0.5,
+    interpolate_nodata: bool = False,
 ) -> TerrainGrid:
     sampler = ElevationSampler(dem_path, target_crs)
     try:
@@ -110,14 +112,20 @@ def sample_terrain(
         values = sampler.sample_many(points).reshape((ys.size, xs.size))
         finite_dem_samples = int(np.isfinite(values).sum())
 
-        valid = np.zeros(values.shape, dtype=bool)
+        inside = np.zeros(values.shape, dtype=bool)
         samples_inside_area = 0
         for row, y in enumerate(ys):
             for col, x in enumerate(xs):
                 inside_area = area.covers(Point(float(x), float(y)))
                 if inside_area:
                     samples_inside_area += 1
-                valid[row, col] = inside_area and not np.isnan(values[row, col])
+                inside[row, col] = inside_area
+
+        filled_nodata_samples = 0
+        if interpolate_nodata:
+            values, filled_nodata_samples = interpolate_missing_inside_area(values, inside)
+
+        valid = inside & np.isfinite(values)
 
         if not valid.any():
             diagnostics = TerrainDiagnostics(
@@ -153,9 +161,44 @@ def sample_terrain(
             min_elevation=min_elevation,
             origin_x=float(minx),
             origin_y=float(miny),
+            filled_nodata_samples=filled_nodata_samples,
         )
     finally:
         sampler.close()
+
+
+def interpolate_missing_inside_area(values: np.ndarray, inside: np.ndarray) -> tuple[np.ndarray, int]:
+    filled = values.copy()
+    missing = inside & ~np.isfinite(filled)
+    if not missing.any():
+        return filled, 0
+    if not (inside & np.isfinite(filled)).any():
+        return filled, 0
+
+    filled_count = 0
+    rows, cols = filled.shape
+    max_passes = rows + cols
+    for _ in range(max_passes):
+        updates: list[tuple[int, int, float]] = []
+        missing_positions = np.argwhere(inside & ~np.isfinite(filled))
+        if missing_positions.size == 0:
+            break
+        for row, col in missing_positions:
+            neighbors = []
+            for nrow in range(max(0, row - 1), min(rows, row + 2)):
+                for ncol in range(max(0, col - 1), min(cols, col + 2)):
+                    if nrow == row and ncol == col:
+                        continue
+                    if inside[nrow, ncol] and np.isfinite(filled[nrow, ncol]):
+                        neighbors.append(float(filled[nrow, ncol]))
+            if neighbors:
+                updates.append((int(row), int(col), float(np.mean(neighbors))))
+        if not updates:
+            break
+        for row, col, value in updates:
+            filled[row, col] = value
+        filled_count += len(updates)
+    return filled, filled_count
 
 
 def smooth_elevations(elevations: np.ndarray, valid: np.ndarray, *, iterations: int, factor: float) -> np.ndarray:

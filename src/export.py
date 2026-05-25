@@ -27,6 +27,13 @@ def export_glb(mesh: trimesh.Trimesh, path: Path) -> None:
     mesh.export(path, file_type="glb")
 
 
+def export_gltf(mesh: trimesh.Trimesh, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if mesh.is_empty:
+        raise ValueError("Cannot export an empty mesh.")
+    mesh.export(path, file_type="gltf")
+
+
 def cleanup_normals(mesh: trimesh.Trimesh) -> bool:
     fixer = getattr(mesh, "fix_normals", None)
     if callable(fixer):
@@ -244,7 +251,7 @@ def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
       ["Terrain resolution", `${{summary.terrain_resolution_m ?? 0}} m`],
     ];
     const outputs = Object.entries(summary.outputs || {{}})
-      .filter(([key]) => key === "obj" || key === "glb" || key.endsWith("_stl"));
+      .filter(([key]) => key === "obj" || key === "glb" || key === "gltf" || key.endsWith("_stl"));
     const rowsHtml = lines
       .map(([label, value]) => `<dt>${{escapeHtml(label)}}</dt><dd>${{escapeHtml(value)}}</dd>`)
       .join("");

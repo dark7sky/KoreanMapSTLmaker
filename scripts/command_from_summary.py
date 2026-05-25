@@ -60,6 +60,8 @@ def build_command(summary_path: Path) -> str:
     maybe_add_multi(parts, "--floor-field", options.get("floor_fields"))
     maybe_add_multi(parts, "--export-format", options.get("export_formats"))
 
+    if options.get("interpolate_nodata") is True:
+        parts.append("--interpolate-nodata")
     if options.get("separate") is True:
         parts.append("--separate")
     if options.get("preview") is True:

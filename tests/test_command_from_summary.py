@@ -39,7 +39,8 @@ def test_build_command_from_summary_options(tmp_path):
                     "height_fields": ["HEIGHT"],
                     "floor_fields": ["GRND_FLR"],
                     "building_base_mode": "representative",
-                    "export_formats": ["stl", "obj"],
+                    "export_formats": ["stl", "obj", "gltf"],
+                    "interpolate_nodata": True,
                     "z_scale": 1.5,
                 }
             }
@@ -64,7 +65,8 @@ def test_build_command_from_summary_options(tmp_path):
     assert "--z-scale 1.5" in command
     assert "--height-field HEIGHT" in command
     assert "--floor-field GRND_FLR" in command
-    assert "--export-format stl --export-format obj" in command
+    assert "--export-format stl --export-format obj --export-format gltf" in command
+    assert "--interpolate-nodata" in command
     assert "--separate" in command
     assert "--preview" not in command
 

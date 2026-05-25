@@ -103,7 +103,7 @@ def _get_export_formats(job: dict[str, Any]) -> tuple[str, ...]:
     if not all(isinstance(value, str) and value.strip() for value in values):
         raise ValueError('"export_format" must contain non-empty strings.')
     normalized = tuple(dict.fromkeys(value.lower() for value in values))
-    invalid = [value for value in normalized if value not in {"stl", "obj", "glb"}]
+    invalid = [value for value in normalized if value not in {"stl", "obj", "glb", "gltf"}]
     if invalid:
         raise ValueError(f"Unsupported export format(s): {', '.join(invalid)}")
     return normalized
@@ -121,6 +121,7 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         terrain_resolution=_get_float(job, "terrain_resolution", 10.0),
         terrain_smoothing_iterations=_get_int(job, "terrain_smoothing_iterations", 0),
         terrain_smoothing_factor=_get_float(job, "terrain_smoothing_factor", 0.5),
+        interpolate_nodata=_get_bool(job, "interpolate_nodata", False),
         base_thickness=_get_float(job, "base_thickness", 2.0),
         default_floor_height=_get_float(job, "default_floor_height", 3.0),
         default_building_height=_get_float(job, "default_building_height", 6.0),

@@ -24,6 +24,11 @@ def main() -> None:
         default=0.5,
         help="Blend factor per terrain smoothing pass, from 0 to 1.",
     )
+    parser.add_argument(
+        "--interpolate-nodata",
+        action="store_true",
+        help="Fill nodata gaps inside the selected area from neighboring DEM samples.",
+    )
     parser.add_argument("--base-thickness", type=_non_negative_float, default=2.0, help="Base thickness in meters.")
     parser.add_argument("--default-floor-height", type=_positive_float, default=3.0, help="Meters per floor fallback.")
     parser.add_argument("--default-building-height", type=_positive_float, default=6.0, help="Default building height.")
@@ -59,7 +64,7 @@ def main() -> None:
     parser.add_argument(
         "--export-format",
         action="append",
-        choices=("stl", "obj", "glb"),
+        choices=("stl", "obj", "glb", "gltf"),
         help="Export format. Repeat to export multiple formats (default: stl).",
     )
     parser.add_argument("--preview", action="store_true", help="Generate a self-contained preview HTML file.")
@@ -88,6 +93,7 @@ def main() -> None:
         terrain_resolution=args.terrain_resolution,
         terrain_smoothing_iterations=args.terrain_smoothing_iterations,
         terrain_smoothing_factor=args.terrain_smoothing_factor,
+        interpolate_nodata=args.interpolate_nodata,
         base_thickness=args.base_thickness,
         default_floor_height=args.default_floor_height,
         default_building_height=args.default_building_height,

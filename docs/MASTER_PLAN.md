@@ -8,7 +8,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Add dependency files.
 - [x] Add CLI entrypoint.
 - [x] Add master plan.
-- [ ] Add real sample data guide.
+- [x] Add real sample data guide.
 
 ## Phase 1 - Local CLI MVP
 
@@ -50,7 +50,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [ ] Clip terrain boundary exactly to selected polygon.
 - [ ] Add resampling method options.
-- [ ] Add nodata interpolation.
+- [x] Add nodata interpolation.
 - [x] Add smoothing.
 - [ ] Add mesh decimation.
 - [ ] Add chunked processing for large areas.
@@ -111,7 +111,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [x] OBJ export.
 - [x] GLB export.
-- [ ] GLTF export.
+- [x] GLTF export.
 - [ ] Material separation for visual formats.
 - [ ] Blender import helper.
 

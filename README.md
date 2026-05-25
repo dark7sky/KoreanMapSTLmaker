@@ -71,7 +71,9 @@ Then run an end-to-end sample:
   --export-format stl `
   --export-format obj `
   --export-format glb `
+  --export-format gltf `
   --terrain-resolution 10 `
+  --interpolate-nodata `
   --terrain-smoothing-iterations 1 `
   --terrain-smoothing-factor 0.4 `
   --z-scale 1.5 `
@@ -111,6 +113,7 @@ Implemented:
 - DEM sampling over selected area
 - terrain mesh generation with base thickness
 - optional terrain smoothing
+- optional DEM nodata interpolation inside the selected area (`--interpolate-nodata`)
 - vertical terrain exaggeration (`--z-scale`)
 - print-ready model scale and optional base plate controls
 - building footprint clipping
@@ -120,6 +123,7 @@ Implemented:
 - combined STL export
 - optional OBJ export (`--export-format obj`)
 - optional GLB export (`--export-format glb`)
+- optional GLTF export (`--export-format gltf`)
 - summary JSON export
 - self-contained preview HTML export
 - mesh quality summary in the JSON output
@@ -150,12 +154,13 @@ The tool writes:
 - `model.stl`
 - `model.obj` when `--export-format obj` is passed
 - `model.glb` when `--export-format glb` is passed
+- `model.gltf` when `--export-format gltf` is passed
 - `model_summary.json`
 - `model_preview.html` when `--preview` is passed
 
-Summary includes area, terrain resolution, minimum elevation, building count, height source counts, mesh quality, selected building base mode, generation options, vertices, and faces.
+Summary includes area, terrain resolution, minimum elevation, valid and interpolated terrain sample counts, building count, height source counts, mesh quality, selected building base mode, generation options, vertices, and faces.
 Use `scripts\command_from_summary.py output\model_summary.json` to print a rerun command from the saved options.
-The preview panel also shows a compact summary and clickable local links for generated `obj` / separate `stl` outputs when those files are present in the summary.
+The preview panel also shows a compact summary and clickable local links for generated `obj` / `glb` / `gltf` / separate `stl` outputs when those files are present in the summary.
 
 ## Master Backlog
 
@@ -164,6 +169,7 @@ See `docs/MASTER_PLAN.md`.
 ## Real Data
 
 See `docs/DATA_PREP.md` for preparing DEM and building files.
+See `docs/REAL_DATA_GUIDE.md` for public Korean building/DEM source candidates and a real-data checklist.
 
 ## Draw an Area
 
