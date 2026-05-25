@@ -155,7 +155,21 @@ Import generated model outputs into Blender for visual review:
 blender --python scripts\blender_import.py -- output\my_area_summary.json --clear-scene --set-metric-units
 ```
 
-## 8. Dataset Registry
+## 8. Optional Cached Re-run
+
+If you frequently rerun the same inputs/options, use the cached runner to skip rebuilds on repeated jobs.
+
+Create `job.json` (same schema as one `scripts\run_batch.py` job object), then run:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\cache_model.py `
+  --job job.json `
+  --cache-dir .cache\model_runner
+```
+
+The script prints `Cache: hit` when outputs were restored from cache, or `Cache: miss` when it rebuilt and stored a new cache entry.
+
+## 9. Dataset Registry
 
 For repeated work with the same source data, maintain a dataset registry that names each DEM and building dataset and records the details needed to select it reliably.
 
@@ -196,7 +210,7 @@ Or select a dataset by overlap with your drawn area:
   --commands
 ```
 
-## 9. Run Batch Jobs (JSON)
+## 10. Run Batch Jobs (JSON)
 
 For sequential multi-area processing, prepare a JSON file with top-level `jobs`.
 

@@ -6,13 +6,16 @@ from pyproj.exceptions import CRSError
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
+from .geometry import repair_polygonal_geometry
+
 
 def load_area(path: Path, target_crs: str, fallback_crs: Optional[str]) -> tuple[BaseGeometry, float]:
     gdf = _read_vector(path, fallback_crs, "area", "--area-crs")
     if gdf.empty:
         raise ValueError(f"Area file has no features: {path}")
     gdf = _to_crs(gdf, target_crs, "area", path)
-    geom = unary_union([_repair_geometry(g) for g in gdf.geometry if g is not None and not g.is_empty])
+    repaired = [_repair_geometry(g) for g in gdf.geometry if g is not None]
+    geom = unary_union([g for g in repaired if g is not None and not g.is_empty])
     if geom.is_empty:
         raise ValueError("Area geometry is empty after loading.")
     return geom, geom.area / 1_000_000.0
@@ -55,8 +58,4 @@ def _to_crs(gdf: gpd.GeoDataFrame, target_crs: str, label: str, path: Path) -> g
 
 
 def _repair_geometry(geom: BaseGeometry) -> BaseGeometry:
-    if geom is None or geom.is_empty:
-        return geom
-    if geom.is_valid:
-        return geom
-    return geom.buffer(0)
+    return repair_polygonal_geometry(geom)

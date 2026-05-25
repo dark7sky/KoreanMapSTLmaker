@@ -86,3 +86,31 @@ The JSON summary reports the resolved path for each dataset input, lists any mis
 Dataset selection expects `coverage_bounds` to use the same CRS as `--target-crs`.
 
 After a dataset is selected, add run-specific generation options such as `--export-format gltf`, `--interpolate-nodata`, smoothing, scale, and base plate flags to the printed `make_model.py` command as needed.
+
+## Build Dataset Index
+
+Generate an index for DEM rasters or building vectors so you can review coverage and metadata before creating registry entries.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_dataset_index.py `
+  --root data\dem `
+  --kind dem `
+  --out output\dem_dataset_index.json `
+  --target-crs EPSG:5179
+```
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_dataset_index.py `
+  --root data\buildings `
+  --kind buildings `
+  --out output\building_dataset_index.json `
+  --target-crs EPSG:5179
+```
+
+Behavior:
+
+- recursively scans `--root`
+- DEM extensions: `.tif`, `.tiff`
+- building extensions: `.shp`, `.gpkg`, `.geojson`, `.json`
+- writes JSON with `type`, `path`, `crs`, `bounds`, `coverage_bounds`, and basic `metadata`
+- stores `path` relative to `--root` for registry-friendly copying

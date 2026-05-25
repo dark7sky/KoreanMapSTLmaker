@@ -110,6 +110,16 @@ Import generated outputs into Blender:
 blender --python scripts\blender_import.py -- output\sample_model_summary.json --clear-scene --set-metric-units
 ```
 
+Reuse generated outputs from a local cache (same inputs/options => cache hit):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\cache_model.py `
+  --job job.json `
+  --cache-dir .cache\model_runner
+```
+
+`job.json` uses the same keys as a `scripts\run_batch.py` job object.
+
 ## Current Scope
 
 Implemented:
@@ -137,9 +147,13 @@ Implemented:
 - per-building diagnostics in the JSON output
 - normal cleanup before export
 - standalone mesh repair command for STL/OBJ (`scripts/repair_mesh.py`)
+- robust polygonal geometry repair for invalid area/building inputs
 - building base elevation modes: representative, min, mean
 - polygon holes are preserved during building extrusion
 - dataset command generation from registry entries (`scripts/command_from_dataset.py`)
+- DEM/building dataset index generation (`scripts/build_dataset_index.py`)
+- cached model re-run helper (`scripts/cache_model.py`)
+- master plan progress report (`scripts/progress_report.py`)
 - Blender import helper (`scripts/blender_import.py`)
 
 MVP limitations:
@@ -172,6 +186,12 @@ The preview panel also shows a compact summary and clickable local links for gen
 ## Master Backlog
 
 See `docs/MASTER_PLAN.md`.
+
+Show current backlog progress:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\progress_report.py
+```
 
 ## Real Data
 

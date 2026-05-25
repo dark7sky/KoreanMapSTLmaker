@@ -31,7 +31,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [ ] Add explicit `--dem-crs` fallback only if needed.
 - [x] Improve CRS error messages.
-- [ ] Repair invalid geometries more thoroughly.
+- [x] Repair invalid geometries more thoroughly.
 - [x] Add field mapping options for height and floor fields.
 - [x] Add better no-overlap diagnostics.
 - [x] Add area bounds report.
@@ -101,11 +101,11 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Generate inspect/model command templates from dataset registry entries.
 - [x] Extend dataset registry with CRS hints, source notes, and default field mappings.
 - [x] Extend dataset registry with coverage bounds, source dates, and license notes.
-- [ ] DEM index.
-- [ ] Building index.
+- [x] DEM index.
+- [x] Building index.
 - [x] Automatic overlap selection.
 - [x] Registry-backed defaults for height/floor fields in generated commands.
-- [ ] Cache generated outputs.
+- [x] Cache generated outputs.
 
 ## Phase 10 - Additional Formats
 
