@@ -48,7 +48,10 @@ class ElevationSampler:
         self.nodata = self.dataset.nodata
         dem_crs = self.dataset.crs
         if dem_crs is None:
-            raise ValueError(f"DEM has no CRS: {dem_path}. Provide a GeoTIFF with a defined CRS.")
+            raise ValueError(
+                f"DEM CRS is missing for {dem_path}. Re-export the raster as a GeoTIFF with CRS metadata "
+                "before running make_model.py."
+            )
         self.dem_crs = dem_crs
         self.target_crs = target_crs
         self.transformer = Transformer.from_crs(CRS.from_string(target_crs), dem_crs, always_xy=True)
@@ -228,7 +231,10 @@ def smooth_elevations(elevations: np.ndarray, valid: np.ndarray, *, iterations: 
 def get_dem_info(dem_path: str, target_crs: str) -> DemInfo:
     with rasterio.open(dem_path) as dataset:
         if dataset.crs is None:
-            raise ValueError(f"DEM has no CRS: {dem_path}. Provide a GeoTIFF with a defined CRS.")
+            raise ValueError(
+                f"DEM CRS is missing for {dem_path}. Re-export the raster as a GeoTIFF with CRS metadata "
+                "before running make_model.py."
+            )
         bounds = dataset.bounds
         target_bounds = transform_bounds(dataset.crs, CRS.from_string(target_crs), *bounds)
         return DemInfo(

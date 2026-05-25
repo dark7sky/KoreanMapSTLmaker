@@ -30,7 +30,7 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 2 - Data and CRS Robustness
 
 - [ ] Add explicit `--dem-crs` fallback only if needed.
-- [ ] Improve CRS error messages.
+- [x] Improve CRS error messages.
 - [ ] Repair invalid geometries more thoroughly.
 - [x] Add field mapping options for height and floor fields.
 - [x] Add better no-overlap diagnostics.

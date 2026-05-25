@@ -54,7 +54,7 @@ Check that:
 - Building fields include `HEIGHT`, `GRND_FLR`, or custom equivalents that you will pass to `make_model.py`.
 - DEM width, height, band count, resolution, and nodata look plausible for the selected area.
 
-If bounds do not overlap, stop and fix CRS/path inputs before generation. If the area selector GeoJSON reports a missing CRS, keep `--area-crs EPSG:4326` in both the inspect and generate commands.
+If bounds do not overlap, stop and fix CRS/path inputs before generation. If the area selector GeoJSON reports a missing CRS, keep `--area-crs EPSG:4326` in both the inspect and generate commands. If a building SHP reports a missing CRS, first check that the `.prj` file stayed beside the `.shp`; otherwise pass `--building-crs` with the source CRS.
 
 ## 4. Choose Building Fields
 
