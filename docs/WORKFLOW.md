@@ -178,6 +178,16 @@ Generate inspect/model command templates from a named dataset:
 .\.venv\Scripts\python.exe scripts\command_from_dataset.py sample_block
 ```
 
+Or select a dataset by overlap with your drawn area:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\select_dataset.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --registry datasets.json `
+  --commands
+```
+
 ## 9. Run Batch Jobs (JSON)
 
 For sequential multi-area processing, prepare a JSON file with top-level `jobs`.

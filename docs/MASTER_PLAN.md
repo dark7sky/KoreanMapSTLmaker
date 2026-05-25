@@ -103,7 +103,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Extend dataset registry with coverage bounds, source dates, and license notes.
 - [ ] DEM index.
 - [ ] Building index.
-- [ ] Automatic overlap selection.
+- [x] Automatic overlap selection.
 - [x] Registry-backed defaults for height/floor fields in generated commands.
 - [ ] Cache generated outputs.
 

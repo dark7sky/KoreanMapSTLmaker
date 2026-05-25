@@ -46,6 +46,25 @@ Generate command templates for a named dataset:
 .\.venv\Scripts\python.exe scripts\command_from_dataset.py sample_block
 ```
 
+Select datasets that overlap a drawn area:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\select_dataset.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --registry datasets.json
+```
+
+Print inspect/model commands for the best overlapping dataset:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\select_dataset.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --registry datasets.json `
+  --commands
+```
+
 The script prints two PowerShell command templates:
 
 - `scripts\inspect_data.py` with `--area`, `--buildings`, `--dem`, and optional `--area-crs` / `--building-crs`
@@ -64,3 +83,4 @@ The command validates that:
 - optional `source_date`, `license`, and `source_url` are non-empty strings when present
 
 The JSON summary reports the resolved path for each dataset input, lists any missing path fields in `missing_paths`, and includes a `metadata` object when optional fields are present.
+Dataset selection expects `coverage_bounds` to use the same CRS as `--target-crs`.
