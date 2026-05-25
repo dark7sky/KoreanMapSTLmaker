@@ -7,7 +7,7 @@ def main() -> None:
     parser.add_argument("--area", required=True, type=Path, help="Area polygon file, e.g. GeoJSON/SHP/GPKG.")
     parser.add_argument("--buildings", type=Path, help="Building footprints file.")
     parser.add_argument("--dem", required=True, type=Path, help="DEM GeoTIFF.")
-    parser.add_argument("--out", required=True, type=Path, help="Output model path. STL uses this path; OBJ uses the same stem.")
+    parser.add_argument("--out", required=True, type=Path, help="Output model path. STL uses this path; OBJ/GLB use the same stem.")
     parser.add_argument("--target-crs", default="EPSG:5179", help="Metric CRS used for modeling.")
     parser.add_argument("--area-crs", help="Fallback CRS when area data has none.")
     parser.add_argument("--building-crs", help="Fallback CRS when building data has none.")
@@ -41,7 +41,7 @@ def main() -> None:
     parser.add_argument(
         "--export-format",
         action="append",
-        choices=("stl", "obj"),
+        choices=("stl", "obj", "glb"),
         help="Export format. Repeat to export multiple formats (default: stl).",
     )
     parser.add_argument("--preview", action="store_true", help="Generate a self-contained preview HTML file.")

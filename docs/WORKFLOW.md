@@ -106,6 +106,7 @@ Run:
   --out output\my_area.stl `
   --export-format stl `
   --export-format obj `
+  --export-format glb `
   --terrain-resolution 10 `
   --z-scale 1.5 `
   --model-scale 1.0 `
@@ -204,7 +205,8 @@ Run:
 .\.venv\Scripts\python.exe scripts\run_batch.py `
   --batch batch_jobs.json `
   --summary-out output\batch_summary.json `
-  --retries 1
+  --retries 1 `
+  --workers 2
 ```
 
-The script runs jobs one by one using the same model pipeline as `make_model.py`. Failures are recorded in the batch summary, each failed job can be retried with `--retries`, and the process exits non-zero only after all jobs finish.
+The script runs jobs using the same model pipeline as `make_model.py`. Use `--workers` for parallel jobs. Failures are recorded in the batch summary, each failed job can be retried with `--retries`, and the process exits non-zero only after all jobs finish.

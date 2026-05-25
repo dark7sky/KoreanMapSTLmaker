@@ -110,7 +110,8 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 10 - Additional Formats
 
 - [x] OBJ export.
-- [ ] GLB/GLTF export.
+- [x] GLB export.
+- [ ] GLTF export.
 - [ ] Material separation for visual formats.
 - [ ] Blender import helper.
 
@@ -120,7 +121,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Multiple area jobs.
 - [x] Retry failed jobs.
 - [x] Summary report.
-- [ ] Parallel processing.
+- [x] Parallel processing.
 
 ## Phase 12 - Optional Web Service
 

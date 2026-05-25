@@ -1,4 +1,5 @@
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import sys
 from pathlib import Path
@@ -19,6 +20,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--summary-out", type=Path, help="Write batch execution summary JSON to this path.")
     parser.add_argument("--retries", type=_non_negative_int, default=0, help="Retry each failed job this many times.")
+    parser.add_argument("--workers", type=_positive_int, default=1, help="Number of jobs to run in parallel.")
     return parser.parse_args(argv)
 
 
@@ -88,7 +90,7 @@ def _get_export_formats(job: dict[str, Any]) -> tuple[str, ...]:
     if not all(isinstance(value, str) and value.strip() for value in values):
         raise ValueError('"export_format" must contain non-empty strings.')
     normalized = tuple(dict.fromkeys(value.lower() for value in values))
-    invalid = [value for value in normalized if value not in {"stl", "obj"}]
+    invalid = [value for value in normalized if value not in {"stl", "obj", "glb"}]
     if invalid:
         raise ValueError(f"Unsupported export format(s): {', '.join(invalid)}")
     return normalized
@@ -123,37 +125,53 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
     )
 
 
-def run_jobs(jobs: list[dict[str, Any]], *, retries: int = 0) -> dict[str, Any]:
-    results: list[dict[str, Any]] = []
-    failure_count = 0
-    for index, job in enumerate(jobs):
-        job_name = str(job.get("name") or f"job_{index + 1}")
-        record: dict[str, Any] = {"index": index, "name": job_name}
-        errors: list[str] = []
-        for attempt in range(retries + 1):
-            try:
-                options = build_options_from_job(job, index)
-                summary = build_model(options)
-                record["status"] = "ok"
-                record["attempts"] = attempt + 1
-                record["output"] = summary.get("output")
-                record["summary"] = summary.get("summary")
-                break
-            except Exception as exc:  # pragma: no cover - exercised in tests via monkeypatch
-                errors.append(str(exc))
-        if "status" not in record:
-            failure_count += 1
-            record["status"] = "failed"
-            record["attempts"] = retries + 1
-            record["error"] = errors[-1]
-            record["errors"] = errors
-        results.append(record)
+def run_jobs(jobs: list[dict[str, Any]], *, retries: int = 0, workers: int = 1) -> dict[str, Any]:
+    if workers < 1:
+        raise ValueError("workers must be 1 or greater")
+    if workers == 1:
+        results = [_run_one_job(index, job, retries) for index, job in enumerate(jobs)]
+    else:
+        results_by_index: dict[int, dict[str, Any]] = {}
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(_run_one_job, index, job, retries): index
+                for index, job in enumerate(jobs)
+            }
+            for future in as_completed(futures):
+                index = futures[future]
+                results_by_index[index] = future.result()
+        results = [results_by_index[index] for index in range(len(jobs))]
+    failure_count = sum(1 for result in results if result["status"] == "failed")
     return {
         "job_count": len(jobs),
         "success_count": len(jobs) - failure_count,
         "failure_count": failure_count,
+        "workers": workers,
         "jobs": results,
     }
+
+
+def _run_one_job(index: int, job: dict[str, Any], retries: int) -> dict[str, Any]:
+    job_name = str(job.get("name") or f"job_{index + 1}")
+    record: dict[str, Any] = {"index": index, "name": job_name}
+    errors: list[str] = []
+    for attempt in range(retries + 1):
+        try:
+            options = build_options_from_job(job, index)
+            summary = build_model(options)
+            record["status"] = "ok"
+            record["attempts"] = attempt + 1
+            record["output"] = summary.get("output")
+            record["summary"] = summary.get("summary")
+            break
+        except Exception as exc:  # pragma: no cover - exercised in tests via monkeypatch
+            errors.append(str(exc))
+    if "status" not in record:
+        record["status"] = "failed"
+        record["attempts"] = retries + 1
+        record["error"] = errors[-1]
+        record["errors"] = errors
+    return record
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -161,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
     jobs = load_jobs(args.batch)
     if args.summary_out is not None:
         _check_summary_out_does_not_collide(args.summary_out, jobs)
-    batch_summary = run_jobs(jobs, retries=args.retries)
+    batch_summary = run_jobs(jobs, retries=args.retries, workers=args.workers)
     if args.summary_out is not None:
         args.summary_out.parent.mkdir(parents=True, exist_ok=True)
         args.summary_out.write_text(json.dumps(batch_summary, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -185,6 +203,13 @@ def _non_negative_int(value: str) -> int:
     parsed = int(value)
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be 0 or greater")
+    return parsed
+
+
+def _positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be 1 or greater")
     return parsed
 
 

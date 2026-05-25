@@ -70,6 +70,7 @@ Then run an end-to-end sample:
   --out output/sample_model.stl `
   --export-format stl `
   --export-format obj `
+  --export-format glb `
   --terrain-resolution 10 `
   --z-scale 1.5 `
   --model-scale 1.0 `
@@ -114,6 +115,7 @@ Implemented:
 - simple building extrusion
 - combined STL export
 - optional OBJ export (`--export-format obj`)
+- optional GLB export (`--export-format glb`)
 - summary JSON export
 - self-contained preview HTML export
 - mesh quality summary in the JSON output
@@ -142,6 +144,7 @@ The tool writes:
 
 - `model.stl`
 - `model.obj` when `--export-format obj` is passed
+- `model.glb` when `--export-format glb` is passed
 - `model_summary.json`
 - `model_preview.html` when `--preview` is passed
 

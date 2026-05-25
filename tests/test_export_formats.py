@@ -63,7 +63,7 @@ def test_cli_default_export_format_is_stl(monkeypatch):
     src.cli.main()
 
     assert captured["formats"] == ("stl",)
-    assert src.cli._normalize_export_formats(["stl", "obj", "stl"]) == ("stl", "obj")
+    assert src.cli._normalize_export_formats(["stl", "obj", "glb", "stl"]) == ("stl", "obj", "glb")
 
 
 def test_cli_passes_simplify_tolerance(monkeypatch):
@@ -162,6 +162,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     combined_mesh = _FakeMesh()
     export_stl_calls = []
     export_obj_calls = []
+    export_glb_calls = []
     merge_call_count = {"count": 0}
 
     class _Area:
@@ -219,6 +220,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     monkeypatch.setattr(src.pipeline, "export_summary", lambda *args, **kwargs: tmp_path / "summary.json")
     monkeypatch.setattr(src.pipeline, "export_stl", lambda mesh, path: export_stl_calls.append(path))
     monkeypatch.setattr(src.pipeline, "export_obj", lambda mesh, path: export_obj_calls.append(path))
+    monkeypatch.setattr(src.pipeline, "export_glb", lambda mesh, path: export_glb_calls.append(path))
 
     options = src.pipeline.BuildOptions(
         area_path=tmp_path / "area.geojson",
@@ -243,7 +245,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         height_fields=(),
         floor_fields=(),
         building_base_mode="representative",
-        export_formats=("obj",),
+        export_formats=("obj", "glb"),
     )
     options.area_path.write_text("{}", encoding="utf-8")
     options.dem_path.write_text("dem", encoding="utf-8")
@@ -252,10 +254,11 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
 
     assert export_stl_calls == []
     assert export_obj_calls == [tmp_path / "model.obj"]
+    assert export_glb_calls == [tmp_path / "model.glb"]
     assert summary["output"] == str(tmp_path / "model.obj")
-    assert summary["outputs"] == {"obj": str(tmp_path / "model.obj")}
+    assert summary["outputs"] == {"obj": str(tmp_path / "model.obj"), "glb": str(tmp_path / "model.glb")}
     assert summary["options"]["out"] == str(tmp_path / "model.stl")
-    assert summary["options"]["export_formats"] == ["obj"]
+    assert summary["options"]["export_formats"] == ["obj", "glb"]
     assert summary["options"]["simplify_tolerance"] == 0.0
 
 

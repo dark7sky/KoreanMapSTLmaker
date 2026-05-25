@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from src.buildings import prepare_buildings
-from src.export import cleanup_normals, export_obj, export_preview_html, export_stl, export_summary
+from src.export import cleanup_normals, export_glb, export_obj, export_preview_html, export_stl, export_summary
 from src.io import load_area
 from src.mesh import add_base_plate, make_building_meshes, make_terrain_mesh, merge_meshes, scale_mesh
 from src.mesh_quality import mesh_summary
@@ -99,6 +99,10 @@ def build_model(options: BuildOptions) -> dict:
         obj_path = options.out_path.with_suffix(".obj")
         export_obj(combined_mesh, obj_path)
         output_paths["obj"] = str(obj_path)
+    if "glb" in options.export_formats:
+        glb_path = options.out_path.with_suffix(".glb")
+        export_glb(combined_mesh, glb_path)
+        output_paths["glb"] = str(glb_path)
     if options.separate and "stl" in options.export_formats:
         terrain_path = options.out_path.with_name(f"{options.out_path.stem}_terrain.stl")
         terrain_export_mesh = scale_mesh(terrain_mesh, options.model_scale)

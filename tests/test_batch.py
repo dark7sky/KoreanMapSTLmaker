@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import time
 
 import pytest
 
@@ -28,7 +29,7 @@ def test_build_options_from_job_maps_cli_like_fields():
             "dem": "data/dem/a.tif",
             "buildings": "data/buildings/a.geojson",
             "out": "output/a.stl",
-            "export_format": ["stl", "obj", "stl"],
+            "export_format": ["stl", "obj", "glb", "stl"],
             "height_field": ["HEIGHT", "height_m"],
             "floor_field": ["GRND_FLR"],
             "z_scale": 1.5,
@@ -44,7 +45,7 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.dem_path == Path("data/dem/a.tif")
     assert options.buildings_path == Path("data/buildings/a.geojson")
     assert options.out_path == Path("output/a.stl")
-    assert options.export_formats == ("stl", "obj")
+    assert options.export_formats == ("stl", "obj", "glb")
     assert options.height_fields == ("HEIGHT", "height_m")
     assert options.floor_fields == ("GRND_FLR",)
     assert options.z_scale == 1.5
@@ -105,6 +106,7 @@ def test_run_jobs_records_failures_and_keeps_going(monkeypatch):
     assert summary["job_count"] == 3
     assert summary["success_count"] == 2
     assert summary["failure_count"] == 1
+    assert summary["workers"] == 1
     assert [job["status"] for job in summary["jobs"]] == ["ok", "failed", "ok"]
     assert summary["jobs"][1]["error"] == "dem overlap failed"
 
@@ -145,6 +147,27 @@ def test_run_jobs_records_all_retry_errors(monkeypatch):
     assert summary["failure_count"] == 1
     assert summary["jobs"][0]["attempts"] == 3
     assert summary["jobs"][0]["errors"] == ["failed bad.stl", "failed bad.stl", "failed bad.stl"]
+
+
+def test_run_jobs_parallel_keeps_input_order(monkeypatch):
+    def fake_build_model(options):
+        if options.out_path.name == "slow.stl":
+            time.sleep(0.05)
+        return {"output": str(options.out_path), "summary": str(options.out_path.with_suffix(".json"))}
+
+    monkeypatch.setattr(run_batch, "build_model", fake_build_model)
+
+    summary = run_batch.run_jobs(
+        [
+            {"name": "slow", "area": "a.geojson", "dem": "a.tif", "out": "slow.stl"},
+            {"name": "fast", "area": "b.geojson", "dem": "b.tif", "out": "fast.stl"},
+        ],
+        workers=2,
+    )
+
+    assert summary["workers"] == 2
+    assert summary["failure_count"] == 0
+    assert [job["name"] for job in summary["jobs"]] == ["slow", "fast"]
 
 
 def test_main_writes_summary_and_returns_non_zero_on_failures(tmp_path, monkeypatch):
