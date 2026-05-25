@@ -113,7 +113,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] GLB export.
 - [x] GLTF export.
 - [ ] Material separation for visual formats.
-- [ ] Blender import helper.
+- [x] Blender import helper.
 
 ## Phase 11 - Batch Processing
 

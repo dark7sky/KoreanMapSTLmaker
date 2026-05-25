@@ -149,6 +149,12 @@ Print a rerun command from a saved model summary:
 .\.venv\Scripts\python.exe scripts\command_from_summary.py output\my_area_summary.json
 ```
 
+Import generated model outputs into Blender for visual review:
+
+```powershell
+blender --python scripts\blender_import.py -- output\my_area_summary.json --clear-scene --set-metric-units
+```
+
 ## 8. Dataset Registry
 
 For repeated work with the same source data, maintain a dataset registry that names each DEM and building dataset and records the details needed to select it reliably.

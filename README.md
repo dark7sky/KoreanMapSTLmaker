@@ -104,6 +104,12 @@ Repair an existing mesh (STL/OBJ):
   --summary-out output/sample_model_repair_summary.json
 ```
 
+Import generated outputs into Blender:
+
+```powershell
+blender --python scripts\blender_import.py -- output\sample_model_summary.json --clear-scene --set-metric-units
+```
+
 ## Current Scope
 
 Implemented:
@@ -134,6 +140,7 @@ Implemented:
 - building base elevation modes: representative, min, mean
 - polygon holes are preserved during building extrusion
 - dataset command generation from registry entries (`scripts/command_from_dataset.py`)
+- Blender import helper (`scripts/blender_import.py`)
 
 MVP limitations:
 
