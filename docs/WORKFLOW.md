@@ -108,6 +108,9 @@ Run:
   --export-format obj `
   --terrain-resolution 10 `
   --z-scale 1.5 `
+  --model-scale 1.0 `
+  --base-plate-thickness 1.0 `
+  --base-plate-margin 3.0 `
   --building-base-mode representative `
   --height-field HEIGHT `
   --floor-field GRND_FLR `
@@ -115,7 +118,7 @@ Run:
   --preview
 ```
 
-Start with `--terrain-resolution 10` or `20`. Lower the value after the geometry looks correct. Use `--z-scale` only when the terrain relief needs visual exaggeration; building heights remain in real units.
+Start with `--terrain-resolution 10` or `20`. Lower the value after the geometry looks correct. Use `--z-scale` only when the terrain relief needs visual exaggeration; building heights remain in real units. Use `--model-scale` for final print scaling, and add a base plate when the model needs a larger flat bottom for slicing.
 
 ## 7. Review Output
 

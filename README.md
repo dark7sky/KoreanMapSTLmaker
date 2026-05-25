@@ -72,6 +72,9 @@ Then run an end-to-end sample:
   --export-format obj `
   --terrain-resolution 10 `
   --z-scale 1.5 `
+  --model-scale 1.0 `
+  --base-plate-thickness 1.0 `
+  --base-plate-margin 3.0 `
   --building-base-mode representative `
   --separate `
   --preview
@@ -104,6 +107,7 @@ Implemented:
 - DEM sampling over selected area
 - terrain mesh generation with base thickness
 - vertical terrain exaggeration (`--z-scale`)
+- print-ready model scale and optional base plate controls
 - building footprint clipping
 - optional building footprint simplification (`--simplify-tolerance`)
 - building height fallback rules
@@ -114,6 +118,7 @@ Implemented:
 - self-contained preview HTML export
 - mesh quality summary in the JSON output
 - mesh quality includes non-manifold edge and degenerate face counts
+- normal cleanup before export
 - standalone mesh repair command for STL/OBJ (`scripts/repair_mesh.py`)
 - building base elevation modes: representative, min, mean
 - polygon holes are preserved during building extrusion

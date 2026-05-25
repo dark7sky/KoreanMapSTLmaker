@@ -41,6 +41,9 @@ def test_cli_default_export_format_is_stl(monkeypatch):
             default_building_height=6.0,
             min_building_area=4.0,
             simplify_tolerance=0.0,
+            model_scale=1.0,
+            base_plate_thickness=0.0,
+            base_plate_margin=0.0,
             max_area_km2=4.0,
             separate=False,
             export_format=None,
@@ -81,6 +84,9 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
             default_building_height=6.0,
             min_building_area=4.0,
             simplify_tolerance=1.25,
+            model_scale=1.0,
+            base_plate_thickness=0.0,
+            base_plate_margin=0.0,
             max_area_km2=4.0,
             separate=False,
             export_format=None,
@@ -100,6 +106,54 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
     src.cli.main()
 
     assert captured["simplify_tolerance"] == 1.25
+
+
+def test_cli_passes_print_ready_options(monkeypatch):
+    captured = {}
+
+    def fake_parse_args(self):
+        return Namespace(
+            area=Path("area.geojson"),
+            buildings=None,
+            dem=Path("dem.tif"),
+            out=Path("model.stl"),
+            target_crs="EPSG:5179",
+            area_crs=None,
+            building_crs=None,
+            terrain_resolution=10.0,
+            base_thickness=2.0,
+            default_floor_height=3.0,
+            default_building_height=6.0,
+            min_building_area=4.0,
+            simplify_tolerance=0.0,
+            model_scale=0.5,
+            base_plate_thickness=1.2,
+            base_plate_margin=3.4,
+            max_area_km2=4.0,
+            separate=False,
+            export_format=None,
+            preview=False,
+            height_field=None,
+            floor_field=None,
+            building_base_mode="representative",
+        )
+
+    def fake_build_model(options):
+        captured["model_scale"] = options.model_scale
+        captured["base_plate_thickness"] = options.base_plate_thickness
+        captured["base_plate_margin"] = options.base_plate_margin
+        return {"output": "model.stl", "building_count": 0, "faces": 0}
+
+    monkeypatch.setattr(src.cli.argparse.ArgumentParser, "parse_args", fake_parse_args)
+    monkeypatch.setattr("src.pipeline.build_model", fake_build_model)
+
+    src.cli.main()
+
+    assert captured == {
+        "model_scale": 0.5,
+        "base_plate_thickness": 1.2,
+        "base_plate_margin": 3.4,
+    }
 
 
 def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypatch, tmp_path):
@@ -180,6 +234,9 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         default_building_height=6.0,
         min_building_area=4.0,
         simplify_tolerance=0.0,
+        model_scale=1.0,
+        base_plate_thickness=0.0,
+        base_plate_margin=0.0,
         max_area_km2=4.0,
         separate=True,
         preview=False,
@@ -217,6 +274,9 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
         default_building_height=6.0,
         min_building_area=4.0,
         simplify_tolerance=0.0,
+        model_scale=1.0,
+        base_plate_thickness=0.0,
+        base_plate_margin=0.0,
         max_area_km2=4.0,
         separate=False,
         preview=True,

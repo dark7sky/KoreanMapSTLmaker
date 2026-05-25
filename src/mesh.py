@@ -147,6 +147,31 @@ def merge_meshes(meshes: list[trimesh.Trimesh]) -> trimesh.Trimesh:
     return trimesh.util.concatenate(meshes)
 
 
+def add_base_plate(mesh: trimesh.Trimesh, *, margin: float, thickness: float) -> trimesh.Trimesh:
+    if mesh.is_empty or thickness <= 0:
+        return mesh
+    bounds = np.asarray(mesh.bounds, dtype=float)
+    min_bound, max_bound = bounds
+    width = max(max_bound[0] - min_bound[0] + (margin * 2.0), 0.0)
+    depth = max(max_bound[1] - min_bound[1] + (margin * 2.0), 0.0)
+    if width <= 0 or depth <= 0:
+        return mesh
+    plate = trimesh.creation.box(extents=(width, depth, thickness))
+    center_x = (min_bound[0] + max_bound[0]) / 2.0
+    center_y = (min_bound[1] + max_bound[1]) / 2.0
+    center_z = min_bound[2] - (thickness / 2.0)
+    plate.apply_translation((center_x, center_y, center_z))
+    return merge_meshes([mesh, plate])
+
+
+def scale_mesh(mesh: trimesh.Trimesh, scale: float) -> trimesh.Trimesh:
+    if mesh.is_empty or scale == 1.0:
+        return mesh
+    scaled = mesh.copy()
+    scaled.apply_scale(scale)
+    return scaled
+
+
 def _iter_polygons(geometry):
     if isinstance(geometry, Polygon):
         yield geometry

@@ -58,12 +58,12 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 5 - Print-Ready STL
 
 - [x] Add mesh repair command.
-- [ ] Check watertight/non-manifold edges.
+- [x] Check watertight/non-manifold edges.
 - [x] Summarize basic mesh quality: watertight status, Euler number, volume, and bounding box.
 - [x] Add non-manifold edge and degenerate face counts.
-- [ ] Add scale option.
-- [ ] Add base plate option.
-- [ ] Add normal cleanup.
+- [x] Add scale option.
+- [x] Add base plate option.
+- [x] Add normal cleanup.
 - [ ] Validate in slicers.
 
 ## Phase 6 - Preview

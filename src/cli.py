@@ -23,6 +23,19 @@ def main() -> None:
         default=0.0,
         help="Simplify building footprints in meters after clipping (0 disables simplification).",
     )
+    parser.add_argument("--model-scale", type=_positive_float, default=1.0, help="Uniformly scale the final model.")
+    parser.add_argument(
+        "--base-plate-thickness",
+        type=_non_negative_float,
+        default=0.0,
+        help="Add a rectangular base plate below the model with this thickness in model units.",
+    )
+    parser.add_argument(
+        "--base-plate-margin",
+        type=_non_negative_float,
+        default=0.0,
+        help="XY margin around the model when --base-plate-thickness is greater than 0.",
+    )
     parser.add_argument("--max-area-km2", type=_positive_float, default=4.0, help="Safety limit for selected area.")
     parser.add_argument("--separate", action="store_true", help="Also export terrain and buildings separately.")
     parser.add_argument(
@@ -60,6 +73,9 @@ def main() -> None:
         default_building_height=args.default_building_height,
         min_building_area=args.min_building_area,
         simplify_tolerance=args.simplify_tolerance,
+        model_scale=args.model_scale,
+        base_plate_thickness=args.base_plate_thickness,
+        base_plate_margin=args.base_plate_margin,
         max_area_km2=args.max_area_km2,
         separate=args.separate,
         preview=args.preview,

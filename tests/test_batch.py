@@ -32,6 +32,9 @@ def test_build_options_from_job_maps_cli_like_fields():
             "height_field": ["HEIGHT", "height_m"],
             "floor_field": ["GRND_FLR"],
             "z_scale": 1.5,
+            "model_scale": 0.75,
+            "base_plate_thickness": 1.25,
+            "base_plate_margin": 2.5,
             "separate": True,
         },
         0,
@@ -45,6 +48,9 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.height_fields == ("HEIGHT", "height_m")
     assert options.floor_fields == ("GRND_FLR",)
     assert options.z_scale == 1.5
+    assert options.model_scale == 0.75
+    assert options.base_plate_thickness == 1.25
+    assert options.base_plate_margin == 2.5
     assert options.separate is True
 
 

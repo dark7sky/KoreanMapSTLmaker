@@ -27,6 +27,9 @@ def test_build_command_from_summary_options(tmp_path):
                     "default_building_height": 6.0,
                     "min_building_area": 4.0,
                     "simplify_tolerance": 0.1,
+                    "model_scale": 0.5,
+                    "base_plate_thickness": 1.0,
+                    "base_plate_margin": 2.0,
                     "max_area_km2": 4.0,
                     "separate": True,
                     "preview": False,
@@ -49,6 +52,9 @@ def test_build_command_from_summary_options(tmp_path):
     assert "--area-crs EPSG:4326" in command
     assert "--terrain-resolution 20.0" in command
     assert "--simplify-tolerance 0.1" in command
+    assert "--model-scale 0.5" in command
+    assert "--base-plate-thickness 1.0" in command
+    assert "--base-plate-margin 2.0" in command
     assert "--z-scale 1.5" in command
     assert "--height-field HEIGHT" in command
     assert "--floor-field GRND_FLR" in command

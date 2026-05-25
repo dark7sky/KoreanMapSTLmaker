@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Optional
 
 from src.buildings import prepare_buildings
-from src.export import export_obj, export_preview_html, export_stl, export_summary
+from src.export import cleanup_normals, export_obj, export_preview_html, export_stl, export_summary
 from src.io import load_area
-from src.mesh import make_building_meshes, make_terrain_mesh, merge_meshes
+from src.mesh import add_base_plate, make_building_meshes, make_terrain_mesh, merge_meshes, scale_mesh
 from src.mesh_quality import mesh_summary
 from src.terrain import bounds_overlap, get_dem_info, sample_terrain
 
@@ -26,6 +26,9 @@ class BuildOptions:
     default_building_height: float
     min_building_area: float
     simplify_tolerance: float
+    model_scale: float
+    base_plate_thickness: float
+    base_plate_margin: float
     max_area_km2: float
     separate: bool
     preview: bool
@@ -80,6 +83,13 @@ def build_model(options: BuildOptions) -> dict:
     )
     buildings_mesh = merge_meshes(building_meshes)
     combined_mesh = merge_meshes([terrain_mesh, buildings_mesh])
+    combined_mesh = add_base_plate(
+        combined_mesh,
+        margin=options.base_plate_margin,
+        thickness=options.base_plate_thickness,
+    )
+    combined_mesh = scale_mesh(combined_mesh, options.model_scale)
+    normals_cleaned = cleanup_normals(combined_mesh)
 
     output_paths: dict[str, str] = {}
     if "stl" in options.export_formats:
@@ -91,11 +101,15 @@ def build_model(options: BuildOptions) -> dict:
         output_paths["obj"] = str(obj_path)
     if options.separate and "stl" in options.export_formats:
         terrain_path = options.out_path.with_name(f"{options.out_path.stem}_terrain.stl")
-        export_stl(terrain_mesh, terrain_path)
+        terrain_export_mesh = scale_mesh(terrain_mesh, options.model_scale)
+        cleanup_normals(terrain_export_mesh)
+        export_stl(terrain_export_mesh, terrain_path)
         output_paths["terrain_stl"] = str(terrain_path)
         if not buildings_mesh.is_empty:
             buildings_path = options.out_path.with_name(f"{options.out_path.stem}_buildings.stl")
-            export_stl(buildings_mesh, buildings_path)
+            buildings_export_mesh = scale_mesh(buildings_mesh, options.model_scale)
+            cleanup_normals(buildings_export_mesh)
+            export_stl(buildings_export_mesh, buildings_path)
             output_paths["buildings_stl"] = str(buildings_path)
 
     area_bounds = [float(value) for value in area.bounds]
@@ -134,6 +148,7 @@ def build_model(options: BuildOptions) -> dict:
         "vertices": int(len(combined_mesh.vertices)),
         "faces": int(len(combined_mesh.faces)),
         "mesh_quality": mesh_summary(combined_mesh),
+        "normal_cleanup_applied": normals_cleaned,
         "bounds": bounds,
         "output": output_paths[options.export_formats[0]],
         "outputs": output_paths,
@@ -154,6 +169,12 @@ def _check_options(options: BuildOptions) -> None:
         raise ValueError("At least one export format is required.")
     if options.preview and "stl" not in options.export_formats:
         raise ValueError("--preview requires STL export. Include --export-format stl.")
+    if options.model_scale <= 0:
+        raise ValueError("model_scale must be greater than 0.")
+    if options.base_plate_thickness < 0:
+        raise ValueError("base_plate_thickness must be 0 or greater.")
+    if options.base_plate_margin < 0:
+        raise ValueError("base_plate_margin must be 0 or greater.")
 
 
 def _check_inputs(options: BuildOptions) -> None:
@@ -180,6 +201,9 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "default_building_height": options.default_building_height,
         "min_building_area": options.min_building_area,
         "simplify_tolerance": options.simplify_tolerance,
+        "model_scale": options.model_scale,
+        "base_plate_thickness": options.base_plate_thickness,
+        "base_plate_margin": options.base_plate_margin,
         "max_area_km2": options.max_area_km2,
         "separate": options.separate,
         "preview": options.preview,

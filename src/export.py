@@ -20,6 +20,39 @@ def export_obj(mesh: trimesh.Trimesh, path: Path) -> None:
     mesh.export(path)
 
 
+def cleanup_normals(mesh: trimesh.Trimesh) -> bool:
+    fixer = getattr(mesh, "fix_normals", None)
+    if callable(fixer):
+        try:
+            fixer()
+            return True
+        except Exception:
+            pass
+    repair_module = getattr(trimesh, "repair", None)
+    fixer = getattr(repair_module, "fix_normals", None) if repair_module is not None else None
+    if callable(fixer):
+        try:
+            fixer(mesh)
+            return True
+        except Exception:
+            pass
+    return _lightweight_normal_cleanup(mesh)
+
+
+def _lightweight_normal_cleanup(mesh: trimesh.Trimesh) -> bool:
+    try:
+        remover = getattr(mesh, "remove_unreferenced_vertices", None)
+        if callable(remover):
+            remover()
+        merger = getattr(mesh, "merge_vertices", None)
+        if callable(merger):
+            merger()
+        _ = mesh.face_normals
+        return True
+    except Exception:
+        return False
+
+
 def export_summary(summary: dict[str, Any], out_path: Path) -> Path:
     summary_path = out_path.with_name(f"{out_path.stem}_summary.json")
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
