@@ -72,6 +72,8 @@ Then run an end-to-end sample:
   --export-format obj `
   --export-format glb `
   --terrain-resolution 10 `
+  --terrain-smoothing-iterations 1 `
+  --terrain-smoothing-factor 0.4 `
   --z-scale 1.5 `
   --model-scale 1.0 `
   --base-plate-thickness 1.0 `
@@ -107,6 +109,7 @@ Implemented:
 - area loading and CRS conversion
 - DEM sampling over selected area
 - terrain mesh generation with base thickness
+- optional terrain smoothing
 - vertical terrain exaggeration (`--z-scale`)
 - print-ready model scale and optional base plate controls
 - building footprint clipping

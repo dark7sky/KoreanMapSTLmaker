@@ -42,6 +42,8 @@ def build_command(summary_path: Path) -> str:
     maybe_add_pair(parts, "--area-crs", options.get("area_crs"))
     maybe_add_pair(parts, "--building-crs", options.get("building_crs"))
     _maybe_add_number(parts, "--terrain-resolution", options.get("terrain_resolution"))
+    _maybe_add_number(parts, "--terrain-smoothing-iterations", options.get("terrain_smoothing_iterations"))
+    _maybe_add_number(parts, "--terrain-smoothing-factor", options.get("terrain_smoothing_factor"))
     _maybe_add_number(parts, "--base-thickness", options.get("base_thickness"))
     _maybe_add_number(parts, "--default-floor-height", options.get("default_floor_height"))
     _maybe_add_number(parts, "--default-building-height", options.get("default_building_height"))

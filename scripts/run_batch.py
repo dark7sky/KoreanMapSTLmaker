@@ -63,6 +63,19 @@ def _get_bool(job: dict[str, Any], key: str, default: bool) -> bool:
     raise ValueError(f'"{key}" must be a boolean when provided.')
 
 
+def _get_int(job: dict[str, Any], key: str, default: int) -> int:
+    value = job.get(key, default)
+    if isinstance(value, bool):
+        raise ValueError(f'"{key}" must be an integer when provided.')
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f'"{key}" must be an integer when provided.') from error
+    if isinstance(value, float) and not value.is_integer():
+        raise ValueError(f'"{key}" must be an integer when provided.')
+    return parsed
+
+
 def _get_string(job: dict[str, Any], key: str, default: str | None) -> str | None:
     value = job.get(key, default)
     if value is None:
@@ -106,6 +119,8 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         area_crs=_get_string(job, "area_crs", None),
         building_crs=_get_string(job, "building_crs", None),
         terrain_resolution=_get_float(job, "terrain_resolution", 10.0),
+        terrain_smoothing_iterations=_get_int(job, "terrain_smoothing_iterations", 0),
+        terrain_smoothing_factor=_get_float(job, "terrain_smoothing_factor", 0.5),
         base_thickness=_get_float(job, "base_thickness", 2.0),
         default_floor_height=_get_float(job, "default_floor_height", 3.0),
         default_building_height=_get_float(job, "default_building_height", 6.0),

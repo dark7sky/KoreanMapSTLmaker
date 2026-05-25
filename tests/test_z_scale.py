@@ -32,6 +32,29 @@ def test_sample_terrain_applies_z_scale_after_min_normalization(monkeypatch):
     assert grid.min_elevation == 10.0
 
 
+def test_sample_terrain_applies_smoothing_to_valid_samples(monkeypatch):
+    class SmoothingSampler(_StubSampler):
+        def bounds_in_target_crs(self) -> list[float]:
+            return [0.0, 0.0, 2.0, 2.0]
+
+        def sample_many(self, points: list[tuple[float, float]]) -> np.ndarray:
+            return np.array([10.0, 10.0, 10.0, 10.0, 30.0, 10.0, 10.0, 10.0, 10.0], dtype=float)
+
+    monkeypatch.setattr(terrain, "ElevationSampler", SmoothingSampler)
+
+    grid = terrain.sample_terrain(
+        box(0.0, 0.0, 2.0, 2.0),
+        "dem.tif",
+        "EPSG:3857",
+        1.0,
+        smoothing_iterations=1,
+        smoothing_factor=1.0,
+    )
+
+    assert grid.elevations[1, 1] < 20.0
+    assert grid.elevations[0, 0] > 0.0
+
+
 def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
     area = box(0.0, 0.0, 1.0, 1.0)
     captured = {}
@@ -93,6 +116,8 @@ def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
         area_crs=None,
         building_crs=None,
         terrain_resolution=1.0,
+        terrain_smoothing_iterations=0,
+        terrain_smoothing_factor=0.5,
         base_thickness=2.0,
         default_floor_height=3.0,
         default_building_height=6.0,

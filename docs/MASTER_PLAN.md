@@ -51,7 +51,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [ ] Clip terrain boundary exactly to selected polygon.
 - [ ] Add resampling method options.
 - [ ] Add nodata interpolation.
-- [ ] Add smoothing.
+- [x] Add smoothing.
 - [ ] Add mesh decimation.
 - [ ] Add chunked processing for large areas.
 

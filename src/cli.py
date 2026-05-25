@@ -12,6 +12,18 @@ def main() -> None:
     parser.add_argument("--area-crs", help="Fallback CRS when area data has none.")
     parser.add_argument("--building-crs", help="Fallback CRS when building data has none.")
     parser.add_argument("--terrain-resolution", type=_positive_float, default=10.0, help="Terrain spacing in meters.")
+    parser.add_argument(
+        "--terrain-smoothing-iterations",
+        type=_non_negative_int,
+        default=0,
+        help="Number of terrain smoothing passes after DEM normalization.",
+    )
+    parser.add_argument(
+        "--terrain-smoothing-factor",
+        type=_unit_float,
+        default=0.5,
+        help="Blend factor per terrain smoothing pass, from 0 to 1.",
+    )
     parser.add_argument("--base-thickness", type=_non_negative_float, default=2.0, help="Base thickness in meters.")
     parser.add_argument("--default-floor-height", type=_positive_float, default=3.0, help="Meters per floor fallback.")
     parser.add_argument("--default-building-height", type=_positive_float, default=6.0, help="Default building height.")
@@ -68,6 +80,8 @@ def main() -> None:
         area_crs=args.area_crs,
         building_crs=args.building_crs,
         terrain_resolution=args.terrain_resolution,
+        terrain_smoothing_iterations=args.terrain_smoothing_iterations,
+        terrain_smoothing_factor=args.terrain_smoothing_factor,
         base_thickness=args.base_thickness,
         default_floor_height=args.default_floor_height,
         default_building_height=args.default_building_height,
@@ -102,6 +116,20 @@ def _positive_float(value: str) -> float:
 
 def _non_negative_float(value: str) -> float:
     parsed = float(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be 0 or greater")
+    return parsed
+
+
+def _unit_float(value: str) -> float:
+    parsed = float(value)
+    if parsed < 0 or parsed > 1:
+        raise argparse.ArgumentTypeError("must be between 0 and 1")
+    return parsed
+
+
+def _non_negative_int(value: str) -> int:
+    parsed = int(value)
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be 0 or greater")
     return parsed

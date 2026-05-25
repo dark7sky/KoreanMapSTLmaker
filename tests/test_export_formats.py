@@ -36,6 +36,8 @@ def test_cli_default_export_format_is_stl(monkeypatch):
             area_crs=None,
             building_crs=None,
             terrain_resolution=10.0,
+            terrain_smoothing_iterations=0,
+            terrain_smoothing_factor=0.5,
             base_thickness=2.0,
             default_floor_height=3.0,
             default_building_height=6.0,
@@ -79,6 +81,8 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
             area_crs=None,
             building_crs=None,
             terrain_resolution=10.0,
+            terrain_smoothing_iterations=0,
+            terrain_smoothing_factor=0.5,
             base_thickness=2.0,
             default_floor_height=3.0,
             default_building_height=6.0,
@@ -121,6 +125,8 @@ def test_cli_passes_print_ready_options(monkeypatch):
             area_crs=None,
             building_crs=None,
             terrain_resolution=10.0,
+            terrain_smoothing_iterations=2,
+            terrain_smoothing_factor=0.25,
             base_thickness=2.0,
             default_floor_height=3.0,
             default_building_height=6.0,
@@ -142,6 +148,8 @@ def test_cli_passes_print_ready_options(monkeypatch):
         captured["model_scale"] = options.model_scale
         captured["base_plate_thickness"] = options.base_plate_thickness
         captured["base_plate_margin"] = options.base_plate_margin
+        captured["terrain_smoothing_iterations"] = options.terrain_smoothing_iterations
+        captured["terrain_smoothing_factor"] = options.terrain_smoothing_factor
         return {"output": "model.stl", "building_count": 0, "faces": 0}
 
     monkeypatch.setattr(src.cli.argparse.ArgumentParser, "parse_args", fake_parse_args)
@@ -153,6 +161,8 @@ def test_cli_passes_print_ready_options(monkeypatch):
         "model_scale": 0.5,
         "base_plate_thickness": 1.2,
         "base_plate_margin": 3.4,
+        "terrain_smoothing_iterations": 2,
+        "terrain_smoothing_factor": 0.25,
     }
 
 
@@ -231,6 +241,8 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         area_crs=None,
         building_crs=None,
         terrain_resolution=10.0,
+        terrain_smoothing_iterations=0,
+        terrain_smoothing_factor=0.5,
         base_thickness=2.0,
         default_floor_height=3.0,
         default_building_height=6.0,
@@ -272,6 +284,8 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
         area_crs=None,
         building_crs=None,
         terrain_resolution=10.0,
+        terrain_smoothing_iterations=0,
+        terrain_smoothing_factor=0.5,
         base_thickness=2.0,
         default_floor_height=3.0,
         default_building_height=6.0,

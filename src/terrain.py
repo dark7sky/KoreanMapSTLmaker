@@ -81,7 +81,13 @@ class ElevationSampler:
 
 
 def sample_terrain(
-    area: BaseGeometry, dem_path: str, target_crs: str, resolution: float, z_scale: float = 1.0
+    area: BaseGeometry,
+    dem_path: str,
+    target_crs: str,
+    resolution: float,
+    z_scale: float = 1.0,
+    smoothing_iterations: int = 0,
+    smoothing_factor: float = 0.5,
 ) -> TerrainGrid:
     sampler = ElevationSampler(dem_path, target_crs)
     try:
@@ -132,6 +138,12 @@ def sample_terrain(
         normalized = values - min_elevation
         if z_scale != 1.0:
             normalized = normalized * z_scale
+        normalized = smooth_elevations(
+            normalized,
+            valid,
+            iterations=smoothing_iterations,
+            factor=smoothing_factor,
+        )
 
         return TerrainGrid(
             xs=xs,
@@ -144,6 +156,30 @@ def sample_terrain(
         )
     finally:
         sampler.close()
+
+
+def smooth_elevations(elevations: np.ndarray, valid: np.ndarray, *, iterations: int, factor: float) -> np.ndarray:
+    if iterations <= 0 or factor <= 0:
+        return elevations
+    factor = min(float(factor), 1.0)
+    smoothed = elevations.copy()
+    for _ in range(iterations):
+        next_values = smoothed.copy()
+        rows, cols = smoothed.shape
+        for row in range(rows):
+            for col in range(cols):
+                if not valid[row, col]:
+                    continue
+                neighbors = []
+                for nrow in range(max(0, row - 1), min(rows, row + 2)):
+                    for ncol in range(max(0, col - 1), min(cols, col + 2)):
+                        if valid[nrow, ncol]:
+                            neighbors.append(smoothed[nrow, ncol])
+                if neighbors:
+                    neighbor_mean = float(np.mean(neighbors))
+                    next_values[row, col] = (smoothed[row, col] * (1.0 - factor)) + (neighbor_mean * factor)
+        smoothed = next_values
+    return smoothed
 
 
 def get_dem_info(dem_path: str, target_crs: str) -> DemInfo:

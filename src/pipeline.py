@@ -21,6 +21,8 @@ class BuildOptions:
     area_crs: Optional[str]
     building_crs: Optional[str]
     terrain_resolution: float
+    terrain_smoothing_iterations: int
+    terrain_smoothing_factor: float
     base_thickness: float
     default_floor_height: float
     default_building_height: float
@@ -52,6 +54,8 @@ def build_model(options: BuildOptions) -> dict:
         options.target_crs,
         options.terrain_resolution,
         z_scale=options.z_scale,
+        smoothing_iterations=options.terrain_smoothing_iterations,
+        smoothing_factor=options.terrain_smoothing_factor,
     )
     terrain_mesh = make_terrain_mesh(terrain_grid, options.base_thickness)
     dem_info = get_dem_info(str(options.dem_path), options.target_crs)
@@ -133,6 +137,8 @@ def build_model(options: BuildOptions) -> dict:
             "nodata": dem_info.nodata,
         },
         "terrain_resolution_m": options.terrain_resolution,
+        "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
+        "terrain_smoothing_factor": options.terrain_smoothing_factor,
         "terrain_samples": [int(terrain_grid.elevations.shape[1]), int(terrain_grid.elevations.shape[0])],
         "terrain_valid_samples": int(terrain_grid.valid.sum()),
         "min_elevation_m": terrain_grid.min_elevation,
@@ -179,6 +185,10 @@ def _check_options(options: BuildOptions) -> None:
         raise ValueError("base_plate_thickness must be 0 or greater.")
     if options.base_plate_margin < 0:
         raise ValueError("base_plate_margin must be 0 or greater.")
+    if options.terrain_smoothing_iterations < 0:
+        raise ValueError("terrain_smoothing_iterations must be 0 or greater.")
+    if not 0 <= options.terrain_smoothing_factor <= 1:
+        raise ValueError("terrain_smoothing_factor must be between 0 and 1.")
 
 
 def _check_inputs(options: BuildOptions) -> None:
@@ -200,6 +210,8 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "area_crs": options.area_crs,
         "building_crs": options.building_crs,
         "terrain_resolution": options.terrain_resolution,
+        "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
+        "terrain_smoothing_factor": options.terrain_smoothing_factor,
         "base_thickness": options.base_thickness,
         "default_floor_height": options.default_floor_height,
         "default_building_height": options.default_building_height,
