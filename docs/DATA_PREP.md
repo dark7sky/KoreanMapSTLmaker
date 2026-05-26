@@ -169,3 +169,17 @@ Then reduce gradually.
 For building data, look for GIS building integrated/master information from VWorld or national spatial data portals. Public references describe `HEIGHT` as building height in meters and `GRND_FLR` as above-ground floor count.
 
 For terrain, use a DEM/DTM source that can be downloaded as GeoTIFF or converted to GeoTIFF.
+
+## 7. Online-Assisted Data Preparation
+
+The current program does not automatically download real public data yet. The planned online-assisted path is documented in:
+
+```text
+docs/DATA_SOURCES_AUTOMATION.md
+```
+
+Short version:
+
+- Buildings are the best first target for automation through VWorld/Public Data Portal linked GIS building APIs.
+- DEM should remain offline-first at first: download/register local DEM files, then convert/register them for the model workflow.
+- API keys, portal login, and traffic limits should be treated as optional external setup, not as a hard requirement for the core CLI.

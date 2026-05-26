@@ -212,6 +212,7 @@ Show current backlog progress:
 
 See `docs/DATA_PREP.md` for preparing DEM and building files.
 See `docs/REAL_DATA_GUIDE.md` for public Korean building/DEM source candidates and a real-data checklist.
+See `docs/DATA_SOURCES_AUTOMATION.md` for the planned optional data-fetch/import workflow.
 
 ## Draw an Area
 

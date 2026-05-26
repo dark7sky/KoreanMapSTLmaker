@@ -16,20 +16,21 @@ Use downloaded files first. It is easier to reproduce, does not depend on per-re
 
 Primary candidate:
 
-- `국토교통부_GIS건물통합정보`
-- Typical format: SHP for bulk file data, WMS/WFS or JSON/XML through API entries.
-- Useful because it combines building geometry with building-register attributes.
+- VWorld / Public Data Portal GIS Building Integrated Information
+- Typical formats: SHP for bulk file data, WMS/WFS or JSON/XML through linked API entries
+- Useful because it combines building geometry with building-register attributes
 
 Public references:
 
-- Public Data Portal file data: <https://www.data.go.kr/data/15083092/fileData.do>
-- Public Data Portal WMS/WFS API listing: <https://www.data.go.kr/data/15123970/openapi.do>
-- VWorld linked download page noted by the public listing: <https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?svcCde=NA&dsId=18>
+- Public Data Portal GIS Building Integrated Information API listing: <https://www.data.go.kr/data/15123970/openapi.do>
+- Public Data Portal standard dataset listing: <https://www.data.go.kr/data/15029175/standard.do>
+- VWorld linked data/API pages: <https://www.vworld.kr>
 
 Notes:
 
 - Prefer file download for this project when possible.
-- API use may require an application/key and traffic limits may vary by provider policy.
+- API use may require an application/key, and traffic limits may vary by provider policy.
+- The online-assisted building fetcher is planned, not complete yet.
 - After download, inspect fields with:
 
 ```powershell
@@ -46,18 +47,20 @@ Choose the height field with `--height-field` if a measured height field exists.
 
 Primary candidates:
 
-- NGII / 국토정보플랫폼 DEM or base spatial information downloads.
-- Basic spatial information often includes terrain-related layers such as contours and elevation points; DEM products are the direct input expected by this project.
+- NGII / National Geographic Information Institute DEM or terrain products
+- Public Data Portal NGII listings and metadata for DEM, numerical map, and national imagery products
 
 Public references:
 
-- NGII / 국토정보플랫폼 entry point: <https://map.ngii.go.kr>
-- Public Data Portal NGII basic spatial information listing: <https://www.data.go.kr/data/15059910/fileData.do>
+- NGII / National Geographic Information Platform entry point: <https://map.ngii.go.kr>
+- Public Data Portal NGII numerical map listing: <https://www.data.go.kr/data/15015482/fileData.do>
+- Public Data Portal NGII imagery/DEM-related listing: <https://www.data.go.kr/data/15015483/fileData.do>
 
 Notes:
 
-- The project expects a GeoTIFF DEM. If the downloaded DEM is another raster format, convert it to GeoTIFF in QGIS or GDAL before running `make_model.py`.
-- Keep the DEM CRS embedded in the file. A missing raster CRS is currently treated as an error.
+- The project expects a GeoTIFF DEM.
+- If the downloaded DEM is another raster format, convert it to GeoTIFF in QGIS/GDAL before running `make_model.py`.
+- Keep the DEM CRS embedded in the file. A missing raster CRS is treated as an error unless a safe explicit fallback is supported by the command.
 - If small nodata holes appear inside the selected area, add `--interpolate-nodata`.
 
 ## CRS Checklist
@@ -107,3 +110,13 @@ Then select a matching dataset for a new area:
   --registry datasets.json `
   --commands
 ```
+
+## Online-Assisted Future
+
+See `docs/DATA_SOURCES_AUTOMATION.md`.
+
+The intended direction is:
+
+- keep local/offline files as the reliable default
+- optionally fetch building data when a VWorld/Public Data key is configured
+- import/register DEM files after the user downloads them from NGII/Public Data sources

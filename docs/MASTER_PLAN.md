@@ -131,3 +131,24 @@ This project should evolve in phases so another agent can resume work at any poi
 - [ ] Upload/download endpoints.
 - [ ] React frontend.
 - [ ] Local Docker packaging.
+
+## Phase 13 - Data Acquisition Automation
+
+Goal: reduce manual GIS preparation while keeping the current offline-first workflow reliable.
+
+- [ ] Add `.env` / environment-variable configuration for optional API keys.
+- [ ] Add a provider abstraction for data acquisition (`buildings`, `dem`, `basemap`, `area`).
+- [ ] Add VWorld GIS building integrated information fetcher for selected bounds.
+- [ ] Convert fetched building features to local GeoJSON/GeoPackage.
+- [ ] Auto-detect and persist building height/floor fields from fetched data.
+- [ ] Add request paging, retry, rate-limit, and cache handling for API fetches.
+- [ ] Add source metadata sidecar files with URL, date, CRS, license, and query bounds.
+- [ ] Add DEM source registry for manually downloaded NGII/Public Data files.
+- [ ] Add optional DEM tile finder based on selected bounds and local metadata.
+- [ ] Add DEM conversion helper to GeoTIFF when source files are not already GeoTIFF.
+- [ ] Add automatic overlap validation after download/import.
+- [ ] Add Streamlit data-prep screen: select area, fetch/import buildings, attach DEM, run inspection.
+- [ ] Add CLI command `scripts/fetch_buildings.py` for repeatable building-data fetches.
+- [ ] Add CLI command `scripts/import_dem.py` for DEM registration/conversion.
+- [ ] Add tests using mocked API responses and tiny raster/vector fixtures.
+- [ ] Add docs for key-required online mode and keyless offline mode.
