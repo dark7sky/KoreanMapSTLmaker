@@ -4,7 +4,19 @@ from pathlib import Path
 from typing import Optional
 
 from src.buildings import prepare_buildings
-from src.export import cleanup_normals, export_glb, export_gltf, export_obj, export_preview_html, export_stl, export_summary
+from src.export import (
+    cleanup_normals,
+    export_glb,
+    export_glb_scene,
+    export_gltf,
+    export_gltf_scene,
+    export_obj,
+    export_obj_scene,
+    export_preview_html,
+    export_stl,
+    export_summary,
+    make_visual_scene,
+)
 from src.io import load_area
 from src.mesh import add_base_plate, make_building_meshes, make_terrain_mesh, merge_meshes, scale_mesh
 from src.mesh_quality import mesh_summary
@@ -41,6 +53,7 @@ class BuildOptions:
     floor_fields: Optional[tuple[str, ...]]
     building_base_mode: str
     export_formats: tuple[str, ...]
+    terrain_resampling: str = "nearest"
     z_scale: float = 1.0
 
 
@@ -56,6 +69,7 @@ def build_model(options: BuildOptions) -> dict:
         str(options.dem_path),
         options.target_crs,
         options.terrain_resolution,
+        resampling=options.terrain_resampling,
         z_scale=options.z_scale,
         smoothing_iterations=options.terrain_smoothing_iterations,
         smoothing_factor=options.terrain_smoothing_factor,
@@ -99,34 +113,64 @@ def build_model(options: BuildOptions) -> dict:
     )
     combined_mesh = scale_mesh(combined_mesh, options.model_scale)
     normals_cleaned = cleanup_normals(combined_mesh)
+    terrain_visual_mesh = None
+    buildings_visual_mesh = None
+    if options.separate:
+        terrain_visual_mesh = scale_mesh(terrain_mesh, options.model_scale)
+        cleanup_normals(terrain_visual_mesh)
+        buildings_visual_mesh = scale_mesh(buildings_mesh, options.model_scale)
+        cleanup_normals(buildings_visual_mesh)
+    separate_visual_formats = options.separate and any(
+        fmt in options.export_formats for fmt in ("obj", "glb", "gltf")
+    )
+    visual_scene = (
+        make_visual_scene(terrain_visual_mesh, buildings_visual_mesh)
+        if separate_visual_formats and terrain_visual_mesh is not None and buildings_visual_mesh is not None
+        else None
+    )
 
     output_paths: dict[str, str] = {}
+    visual_separation: dict[str, bool] = {}
     if "stl" in options.export_formats:
         export_stl(combined_mesh, options.out_path)
         output_paths["stl"] = str(options.out_path)
+        visual_separation["stl"] = False
     if "obj" in options.export_formats:
         obj_path = options.out_path.with_suffix(".obj")
-        export_obj(combined_mesh, obj_path)
+        if visual_scene is not None:
+            export_obj_scene(visual_scene, obj_path)
+            visual_separation["obj"] = True
+        else:
+            export_obj(combined_mesh, obj_path)
+            visual_separation["obj"] = False
         output_paths["obj"] = str(obj_path)
     if "glb" in options.export_formats:
         glb_path = options.out_path.with_suffix(".glb")
-        export_glb(combined_mesh, glb_path)
+        if visual_scene is not None:
+            export_glb_scene(visual_scene, glb_path)
+            visual_separation["glb"] = True
+        else:
+            export_glb(combined_mesh, glb_path)
+            visual_separation["glb"] = False
         output_paths["glb"] = str(glb_path)
     if "gltf" in options.export_formats:
         gltf_path = options.out_path.with_suffix(".gltf")
-        export_gltf(combined_mesh, gltf_path)
+        if visual_scene is not None:
+            export_gltf_scene(visual_scene, gltf_path)
+            visual_separation["gltf"] = True
+        else:
+            export_gltf(combined_mesh, gltf_path)
+            visual_separation["gltf"] = False
         output_paths["gltf"] = str(gltf_path)
     if options.separate and "stl" in options.export_formats:
         terrain_path = options.out_path.with_name(f"{options.out_path.stem}_terrain.stl")
-        terrain_export_mesh = scale_mesh(terrain_mesh, options.model_scale)
-        cleanup_normals(terrain_export_mesh)
-        export_stl(terrain_export_mesh, terrain_path)
+        assert terrain_visual_mesh is not None
+        export_stl(terrain_visual_mesh, terrain_path)
         output_paths["terrain_stl"] = str(terrain_path)
         if not buildings_mesh.is_empty:
             buildings_path = options.out_path.with_name(f"{options.out_path.stem}_buildings.stl")
-            buildings_export_mesh = scale_mesh(buildings_mesh, options.model_scale)
-            cleanup_normals(buildings_export_mesh)
-            export_stl(buildings_export_mesh, buildings_path)
+            assert buildings_visual_mesh is not None
+            export_stl(buildings_visual_mesh, buildings_path)
             output_paths["buildings_stl"] = str(buildings_path)
 
     area_bounds = [float(value) for value in area.bounds]
@@ -146,6 +190,7 @@ def build_model(options: BuildOptions) -> dict:
             "nodata": dem_info.nodata,
         },
         "terrain_resolution_m": options.terrain_resolution,
+        "terrain_resampling": options.terrain_resampling,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
         "terrain_interpolate_nodata": options.interpolate_nodata,
@@ -177,6 +222,7 @@ def build_model(options: BuildOptions) -> dict:
         "output": output_paths[options.export_formats[0]],
         "outputs": output_paths,
         "export_formats": list(options.export_formats),
+        "visual_separation": visual_separation,
         "options": _summary_options(options),
     }
     summary_path = export_summary(summary, options.out_path)
@@ -201,6 +247,8 @@ def _check_options(options: BuildOptions) -> None:
         raise ValueError("base_plate_margin must be 0 or greater.")
     if options.terrain_smoothing_iterations < 0:
         raise ValueError("terrain_smoothing_iterations must be 0 or greater.")
+    if options.terrain_resampling not in {"nearest", "bilinear"}:
+        raise ValueError("terrain_resampling must be one of: nearest, bilinear.")
     if not 0 <= options.terrain_smoothing_factor <= 1:
         raise ValueError("terrain_smoothing_factor must be between 0 and 1.")
     if options.building_diagnostics_limit < 0:
@@ -227,6 +275,7 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "building_crs": options.building_crs,
         "dem_crs": options.dem_crs,
         "terrain_resolution": options.terrain_resolution,
+        "terrain_resampling": options.terrain_resampling,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
         "interpolate_nodata": options.interpolate_nodata,

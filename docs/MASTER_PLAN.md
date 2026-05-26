@@ -49,7 +49,7 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 4 - Terrain Modeling
 
 - [ ] Clip terrain boundary exactly to selected polygon.
-- [ ] Add resampling method options.
+- [x] Add resampling method options.
 - [x] Add nodata interpolation.
 - [x] Add smoothing.
 - [ ] Add mesh decimation.
@@ -89,12 +89,12 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Streamlit UI.
 - [x] File pickers.
 - [x] Option form.
-- [ ] Height/floor field selector based on inspected building attributes.
+- [x] Height/floor field selector based on inspected building attributes.
 - [x] Building base mode selector.
-- [ ] Mesh quality summary panel.
+- [x] Mesh quality summary panel.
 - [x] Progress/log panel.
-- [ ] STL download link.
-- [ ] Preview integration.
+- [x] STL download link.
+- [x] Preview integration.
 
 ## Phase 9 - Dataset Management
 
@@ -113,7 +113,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] OBJ export.
 - [x] GLB export.
 - [x] GLTF export.
-- [ ] Material separation for visual formats.
+- [x] Material separation for visual formats.
 - [x] Blender import helper.
 
 ## Phase 11 - Batch Processing

@@ -3,7 +3,9 @@ import base64
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import trimesh
+from trimesh.visual import ColorVisuals
 
 
 def export_stl(mesh: trimesh.Trimesh, path: Path) -> None:
@@ -32,6 +34,53 @@ def export_gltf(mesh: trimesh.Trimesh, path: Path) -> None:
     if mesh.is_empty:
         raise ValueError("Cannot export an empty mesh.")
     mesh.export(path, file_type="gltf")
+
+
+def make_visual_scene(
+    terrain_mesh: trimesh.Trimesh,
+    buildings_mesh: trimesh.Trimesh,
+) -> trimesh.Scene:
+    terrain_node = _scene_mesh(terrain_mesh, rgba=(175, 148, 120, 255))
+    building_node = _scene_mesh(buildings_mesh, rgba=(190, 190, 195, 255))
+    if terrain_node is None and building_node is None:
+        raise ValueError("Cannot export an empty scene.")
+    scene = trimesh.Scene()
+    if terrain_node is not None:
+        scene.add_geometry(terrain_node, geom_name="terrain")
+    if building_node is not None:
+        scene.add_geometry(building_node, geom_name="buildings")
+    return scene
+
+
+def export_obj_scene(scene: trimesh.Scene, path: Path) -> None:
+    _export_scene(scene, path)
+
+
+def export_glb_scene(scene: trimesh.Scene, path: Path) -> None:
+    _export_scene(scene, path, file_type="glb")
+
+
+def export_gltf_scene(scene: trimesh.Scene, path: Path) -> None:
+    _export_scene(scene, path, file_type="gltf")
+
+
+def _scene_mesh(mesh: trimesh.Trimesh, rgba: tuple[int, int, int, int]) -> trimesh.Trimesh | None:
+    if mesh.is_empty:
+        return None
+    node = mesh.copy()
+    colors = np.tile(np.array(rgba, dtype=np.uint8), (len(node.vertices), 1))
+    node.visual = ColorVisuals(mesh=node, vertex_colors=colors)
+    return node
+
+
+def _export_scene(scene: trimesh.Scene, path: Path, file_type: str | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not scene.geometry:
+        raise ValueError("Cannot export an empty scene.")
+    if file_type is None:
+        scene.export(path)
+        return
+    scene.export(path, file_type=file_type)
 
 
 def cleanup_normals(mesh: trimesh.Trimesh) -> bool:

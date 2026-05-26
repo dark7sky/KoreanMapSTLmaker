@@ -46,6 +46,7 @@ def test_cli_default_export_format_is_stl(monkeypatch):
             building_crs=None,
             dem_crs=None,
             terrain_resolution=10.0,
+            terrain_resampling="nearest",
             terrain_smoothing_iterations=0,
             terrain_smoothing_factor=0.5,
             interpolate_nodata=False,
@@ -94,6 +95,7 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
             building_crs=None,
             dem_crs=None,
             terrain_resolution=10.0,
+            terrain_resampling="nearest",
             terrain_smoothing_iterations=0,
             terrain_smoothing_factor=0.5,
             interpolate_nodata=False,
@@ -141,6 +143,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
             building_crs=None,
             dem_crs=None,
             terrain_resolution=10.0,
+            terrain_resampling="bilinear",
             terrain_smoothing_iterations=2,
             terrain_smoothing_factor=0.25,
             interpolate_nodata=True,
@@ -188,7 +191,7 @@ def test_cli_passes_print_ready_options(monkeypatch):
     }
 
 
-def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypatch, tmp_path):
+def test_pipeline_exports_visual_formats_as_scene_when_separate(monkeypatch, tmp_path):
     terrain_mesh = _FakeMesh()
     buildings_mesh = _FakeMesh()
     combined_mesh = _FakeMesh()
@@ -196,6 +199,9 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     export_obj_calls = []
     export_glb_calls = []
     export_gltf_calls = []
+    export_obj_scene_calls = []
+    export_glb_scene_calls = []
+    export_gltf_scene_calls = []
     merge_call_count = {"count": 0}
 
     class _Area:
@@ -254,10 +260,16 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     monkeypatch.setattr(src.pipeline, "mesh_summary", lambda *args, **kwargs: {"ok": True})
     monkeypatch.setattr(src.pipeline, "bounds_overlap", lambda *args, **kwargs: True)
     monkeypatch.setattr(src.pipeline, "export_summary", lambda *args, **kwargs: tmp_path / "summary.json")
+    monkeypatch.setattr(src.pipeline, "scale_mesh", lambda mesh, *_args, **_kwargs: mesh)
+    monkeypatch.setattr(src.pipeline, "cleanup_normals", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(src.pipeline, "make_visual_scene", lambda terrain, buildings: ("scene", terrain, buildings))
     monkeypatch.setattr(src.pipeline, "export_stl", lambda mesh, path: export_stl_calls.append(path))
     monkeypatch.setattr(src.pipeline, "export_obj", lambda mesh, path: export_obj_calls.append(path))
     monkeypatch.setattr(src.pipeline, "export_glb", lambda mesh, path: export_glb_calls.append(path))
     monkeypatch.setattr(src.pipeline, "export_gltf", lambda mesh, path: export_gltf_calls.append(path))
+    monkeypatch.setattr(src.pipeline, "export_obj_scene", lambda scene, path: export_obj_scene_calls.append((scene, path)))
+    monkeypatch.setattr(src.pipeline, "export_glb_scene", lambda scene, path: export_glb_scene_calls.append((scene, path)))
+    monkeypatch.setattr(src.pipeline, "export_gltf_scene", lambda scene, path: export_gltf_scene_calls.append((scene, path)))
 
     options = src.pipeline.BuildOptions(
         area_path=tmp_path / "area.geojson",
@@ -269,6 +281,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
         building_crs=None,
         dem_crs=None,
         terrain_resolution=10.0,
+        terrain_resampling="nearest",
         terrain_smoothing_iterations=0,
         terrain_smoothing_factor=0.5,
         interpolate_nodata=True,
@@ -295,9 +308,12 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     summary = src.pipeline.build_model(options)
 
     assert export_stl_calls == []
-    assert export_obj_calls == [tmp_path / "model.obj"]
-    assert export_glb_calls == [tmp_path / "model.glb"]
-    assert export_gltf_calls == [tmp_path / "model.gltf"]
+    assert export_obj_calls == []
+    assert export_glb_calls == []
+    assert export_gltf_calls == []
+    assert export_obj_scene_calls == [(("scene", terrain_mesh, buildings_mesh), tmp_path / "model.obj")]
+    assert export_glb_scene_calls == [(("scene", terrain_mesh, buildings_mesh), tmp_path / "model.glb")]
+    assert export_gltf_scene_calls == [(("scene", terrain_mesh, buildings_mesh), tmp_path / "model.gltf")]
     assert summary["output"] == str(tmp_path / "model.obj")
     assert summary["outputs"] == {
         "obj": str(tmp_path / "model.obj"),
@@ -309,6 +325,7 @@ def test_pipeline_exports_requested_formats_and_keeps_separate_stl_only(monkeypa
     assert summary["options"]["simplify_tolerance"] == 0.0
     assert summary["options"]["interpolate_nodata"] is True
     assert summary["terrain_interpolate_nodata"] is True
+    assert summary["visual_separation"] == {"obj": True, "glb": True, "gltf": True}
     diagnostics = summary["building_diagnostics"]
     assert diagnostics["per_building_limit"] == 1
     assert diagnostics["per_building_omitted_count"] == 1
@@ -336,6 +353,7 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
         building_crs=None,
         dem_crs=None,
         terrain_resolution=10.0,
+        terrain_resampling="nearest",
         terrain_smoothing_iterations=0,
         terrain_smoothing_factor=0.5,
         interpolate_nodata=False,
@@ -366,3 +384,213 @@ def test_pipeline_rejects_preview_without_stl_before_processing(monkeypatch, tmp
 
     with pytest.raises(ValueError, match="preview requires STL"):
         src.pipeline.build_model(options)
+
+
+def test_pipeline_keeps_single_mesh_visual_export_when_not_separate(monkeypatch, tmp_path):
+    terrain_mesh = _FakeMesh()
+    buildings_mesh = _FakeMesh()
+    combined_mesh = _FakeMesh()
+    export_obj_calls = []
+    export_obj_scene_calls = []
+
+    class _Area:
+        bounds = (0.0, 0.0, 1.0, 1.0)
+
+    class _TerrainGrid:
+        min_elevation = 10.0
+        elevations = type("E", (), {"shape": (2, 3)})()
+        valid = type("V", (), {"sum": lambda self: 6})()
+        origin_x = 0.0
+        origin_y = 0.0
+
+    class _BuildingResult:
+        buildings = []
+        source_feature_count = 0
+        intersect_feature_count = 0
+        clipped_polygon_count = 0
+        skipped_small_count = 0
+        skipped_no_elevation_count = 0
+        fields = []
+        height_counts = []
+
+    monkeypatch.setattr(src.pipeline, "load_area", lambda *args, **kwargs: (_Area(), 0.01))
+    monkeypatch.setattr(src.pipeline, "sample_terrain", lambda *args, **kwargs: _TerrainGrid())
+    monkeypatch.setattr(src.pipeline, "make_terrain_mesh", lambda *args, **kwargs: terrain_mesh)
+    monkeypatch.setattr(
+        src.pipeline,
+        "get_dem_info",
+        lambda *args, **kwargs: type(
+            "DemInfo",
+            (),
+            {
+                "crs": "EPSG:5179",
+                "bounds": [0.0, 0.0, 1.0, 1.0],
+                "bounds_in_target_crs": [0.0, 0.0, 1.0, 1.0],
+                "width": 1,
+                "height": 1,
+                "resolution": [1.0, 1.0],
+                "nodata": None,
+            },
+        )(),
+    )
+    monkeypatch.setattr(src.pipeline, "prepare_buildings", lambda *args, **kwargs: _BuildingResult())
+    monkeypatch.setattr(src.pipeline, "make_building_meshes", lambda *args, **kwargs: [])
+    monkeypatch.setattr(src.pipeline, "merge_meshes", lambda parts: buildings_mesh if len(parts) == 0 else combined_mesh)
+    monkeypatch.setattr(src.pipeline, "add_base_plate", lambda mesh, **kwargs: mesh)
+    monkeypatch.setattr(src.pipeline, "scale_mesh", lambda mesh, *_args, **_kwargs: mesh)
+    monkeypatch.setattr(src.pipeline, "cleanup_normals", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(src.pipeline, "mesh_summary", lambda *args, **kwargs: {"ok": True})
+    monkeypatch.setattr(src.pipeline, "bounds_overlap", lambda *args, **kwargs: True)
+    monkeypatch.setattr(src.pipeline, "export_summary", lambda *args, **kwargs: tmp_path / "summary.json")
+    monkeypatch.setattr(src.pipeline, "export_obj", lambda mesh, path: export_obj_calls.append((mesh, path)))
+    monkeypatch.setattr(src.pipeline, "export_obj_scene", lambda scene, path: export_obj_scene_calls.append((scene, path)))
+
+    options = src.pipeline.BuildOptions(
+        area_path=tmp_path / "area.geojson",
+        buildings_path=None,
+        dem_path=tmp_path / "dem.tif",
+        out_path=tmp_path / "model.stl",
+        target_crs="EPSG:5179",
+        area_crs=None,
+        building_crs=None,
+        dem_crs=None,
+        terrain_resolution=10.0,
+        terrain_smoothing_iterations=0,
+        terrain_smoothing_factor=0.5,
+        interpolate_nodata=True,
+        base_thickness=2.0,
+        default_floor_height=3.0,
+        default_building_height=6.0,
+        min_building_area=4.0,
+        simplify_tolerance=0.0,
+        model_scale=1.0,
+        base_plate_thickness=0.0,
+        base_plate_margin=0.0,
+        max_area_km2=4.0,
+        building_diagnostics_limit=1,
+        separate=False,
+        preview=False,
+        height_fields=(),
+        floor_fields=(),
+        building_base_mode="representative",
+        export_formats=("obj",),
+    )
+    options.area_path.write_text("{}", encoding="utf-8")
+    options.dem_path.write_text("dem", encoding="utf-8")
+
+    summary = src.pipeline.build_model(options)
+
+    assert export_obj_calls == [(combined_mesh, tmp_path / "model.obj")]
+    assert export_obj_scene_calls == []
+    assert summary["visual_separation"] == {"obj": False}
+
+
+def test_pipeline_separate_stl_behavior_is_unchanged(monkeypatch, tmp_path):
+    terrain_mesh = _FakeMesh()
+    buildings_mesh = _FakeMesh()
+    combined_mesh = _FakeMesh()
+    export_stl_calls = []
+    merge_call_count = {"count": 0}
+
+    class _Area:
+        bounds = (0.0, 0.0, 1.0, 1.0)
+
+    class _TerrainGrid:
+        min_elevation = 10.0
+        elevations = type("E", (), {"shape": (2, 3)})()
+        valid = type("V", (), {"sum": lambda self: 6})()
+        origin_x = 0.0
+        origin_y = 0.0
+
+    class _BuildingResult:
+        buildings = []
+        source_feature_count = 0
+        intersect_feature_count = 0
+        clipped_polygon_count = 0
+        skipped_small_count = 0
+        skipped_no_elevation_count = 0
+        fields = []
+        height_counts = []
+
+    monkeypatch.setattr(src.pipeline, "load_area", lambda *args, **kwargs: (_Area(), 0.01))
+    monkeypatch.setattr(src.pipeline, "sample_terrain", lambda *args, **kwargs: _TerrainGrid())
+    monkeypatch.setattr(src.pipeline, "make_terrain_mesh", lambda *args, **kwargs: terrain_mesh)
+    monkeypatch.setattr(
+        src.pipeline,
+        "get_dem_info",
+        lambda *args, **kwargs: type(
+            "DemInfo",
+            (),
+            {
+                "crs": "EPSG:5179",
+                "bounds": [0.0, 0.0, 1.0, 1.0],
+                "bounds_in_target_crs": [0.0, 0.0, 1.0, 1.0],
+                "width": 1,
+                "height": 1,
+                "resolution": [1.0, 1.0],
+                "nodata": None,
+            },
+        )(),
+    )
+    monkeypatch.setattr(src.pipeline, "prepare_buildings", lambda *args, **kwargs: _BuildingResult())
+    monkeypatch.setattr(src.pipeline, "make_building_meshes", lambda *args, **kwargs: [])
+
+    def fake_merge_meshes(parts):
+        merge_call_count["count"] += 1
+        if merge_call_count["count"] == 1:
+            return buildings_mesh
+        return combined_mesh
+
+    monkeypatch.setattr(src.pipeline, "merge_meshes", fake_merge_meshes)
+    monkeypatch.setattr(src.pipeline, "add_base_plate", lambda mesh, **kwargs: mesh)
+    monkeypatch.setattr(src.pipeline, "scale_mesh", lambda mesh, *_args, **_kwargs: mesh)
+    monkeypatch.setattr(src.pipeline, "cleanup_normals", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(src.pipeline, "mesh_summary", lambda *args, **kwargs: {"ok": True})
+    monkeypatch.setattr(src.pipeline, "bounds_overlap", lambda *args, **kwargs: True)
+    monkeypatch.setattr(src.pipeline, "export_summary", lambda *args, **kwargs: tmp_path / "summary.json")
+    monkeypatch.setattr(src.pipeline, "export_stl", lambda mesh, path: export_stl_calls.append(path))
+    monkeypatch.setattr(src.pipeline, "export_obj_scene", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected")))
+    monkeypatch.setattr(src.pipeline, "export_glb_scene", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected")))
+    monkeypatch.setattr(src.pipeline, "export_gltf_scene", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected")))
+
+    options = src.pipeline.BuildOptions(
+        area_path=tmp_path / "area.geojson",
+        buildings_path=None,
+        dem_path=tmp_path / "dem.tif",
+        out_path=tmp_path / "model.stl",
+        target_crs="EPSG:5179",
+        area_crs=None,
+        building_crs=None,
+        dem_crs=None,
+        terrain_resolution=10.0,
+        terrain_smoothing_iterations=0,
+        terrain_smoothing_factor=0.5,
+        interpolate_nodata=True,
+        base_thickness=2.0,
+        default_floor_height=3.0,
+        default_building_height=6.0,
+        min_building_area=4.0,
+        simplify_tolerance=0.0,
+        model_scale=1.0,
+        base_plate_thickness=0.0,
+        base_plate_margin=0.0,
+        max_area_km2=4.0,
+        building_diagnostics_limit=1,
+        separate=True,
+        preview=False,
+        height_fields=(),
+        floor_fields=(),
+        building_base_mode="representative",
+        export_formats=("stl",),
+    )
+    options.area_path.write_text("{}", encoding="utf-8")
+    options.dem_path.write_text("dem", encoding="utf-8")
+
+    summary = src.pipeline.build_model(options)
+
+    assert export_stl_calls == [
+        tmp_path / "model.stl",
+        tmp_path / "model_terrain.stl",
+        tmp_path / "model_buildings.stl",
+    ]
+    assert summary["visual_separation"] == {"stl": False}

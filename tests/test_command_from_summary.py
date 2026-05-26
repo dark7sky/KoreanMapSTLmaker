@@ -22,6 +22,7 @@ def test_build_command_from_summary_options(tmp_path):
                     "area_crs": "EPSG:4326",
                     "building_crs": None,
                     "terrain_resolution": 20.0,
+                    "terrain_resampling": "bilinear",
                     "terrain_smoothing_iterations": 2,
                     "terrain_smoothing_factor": 0.25,
                     "base_thickness": 2.0,
@@ -55,6 +56,7 @@ def test_build_command_from_summary_options(tmp_path):
     assert "--buildings data/buildings.geojson" in command
     assert "--area-crs EPSG:4326" in command
     assert "--terrain-resolution 20.0" in command
+    assert "--terrain-resampling bilinear" in command
     assert "--terrain-smoothing-iterations 2" in command
     assert "--terrain-smoothing-factor 0.25" in command
     assert "--simplify-tolerance 0.1" in command

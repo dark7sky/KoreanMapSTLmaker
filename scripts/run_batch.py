@@ -83,6 +83,15 @@ def _get_string(job: dict[str, Any], key: str, default: str | None) -> str | Non
     return str(value)
 
 
+def _get_choice(job: dict[str, Any], key: str, default: str, choices: set[str]) -> str:
+    value = _get_string(job, key, default) or default
+    normalized = value.lower()
+    if normalized not in choices:
+        allowed = ", ".join(sorted(choices))
+        raise ValueError(f'"{key}" must be one of: {allowed}')
+    return normalized
+
+
 def _get_tuple_of_strings(job: dict[str, Any], key: str) -> tuple[str, ...]:
     value = job.get(key)
     if value is None:
@@ -120,6 +129,7 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         building_crs=_get_string(job, "building_crs", None),
         dem_crs=_get_string(job, "dem_crs", None),
         terrain_resolution=_get_float(job, "terrain_resolution", 10.0),
+        terrain_resampling=_get_choice(job, "terrain_resampling", "nearest", {"nearest", "bilinear"}),
         terrain_smoothing_iterations=_get_int(job, "terrain_smoothing_iterations", 0),
         terrain_smoothing_factor=_get_float(job, "terrain_smoothing_factor", 0.5),
         interpolate_nodata=_get_bool(job, "interpolate_nodata", False),

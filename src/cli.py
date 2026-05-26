@@ -14,6 +14,12 @@ def main() -> None:
     parser.add_argument("--dem-crs", help="Fallback CRS when DEM raster data has none.")
     parser.add_argument("--terrain-resolution", type=_positive_float, default=10.0, help="Terrain spacing in meters.")
     parser.add_argument(
+        "--terrain-resampling",
+        choices=("nearest", "bilinear"),
+        default="nearest",
+        help="DEM sampling method for terrain elevation lookup.",
+    )
+    parser.add_argument(
         "--terrain-smoothing-iterations",
         type=_non_negative_int,
         default=0,
@@ -93,6 +99,7 @@ def main() -> None:
         building_crs=args.building_crs,
         dem_crs=args.dem_crs,
         terrain_resolution=args.terrain_resolution,
+        terrain_resampling=args.terrain_resampling,
         terrain_smoothing_iterations=args.terrain_smoothing_iterations,
         terrain_smoothing_factor=args.terrain_smoothing_factor,
         interpolate_nodata=args.interpolate_nodata,

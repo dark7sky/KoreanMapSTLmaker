@@ -154,6 +154,7 @@ Implemented:
 - optional OBJ export (`--export-format obj`)
 - optional GLB export (`--export-format glb`)
 - optional GLTF export (`--export-format gltf`)
+- scene-based terrain/building visual separation for OBJ/GLB/GLTF when `--separate` is used
 - summary JSON export
 - self-contained preview HTML export
 - mesh quality summary in the JSON output

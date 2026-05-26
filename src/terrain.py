@@ -46,6 +46,7 @@ class ElevationSampler:
     def __init__(self, dem_path: str, target_crs: str, fallback_dem_crs: str | None = None):
         self.dataset = rasterio.open(dem_path)
         self.nodata = self.dataset.nodata
+        self._band1: np.ndarray | None = None
         dem_crs = self.dataset.crs
         if dem_crs is None:
             if fallback_dem_crs is None:
@@ -68,12 +69,57 @@ class ElevationSampler:
             return float("nan")
         return float(value)
 
-    def sample_many(self, points: list[tuple[float, float]]) -> np.ndarray:
+    def sample_many(self, points: list[tuple[float, float]], method: str = "nearest") -> np.ndarray:
+        if method == "nearest":
+            return self._sample_many_nearest(points)
+        if method == "bilinear":
+            return self._sample_many_bilinear(points)
+        raise ValueError(f"Unsupported terrain resampling method: {method}")
+
+    def _sample_many_nearest(self, points: list[tuple[float, float]]) -> np.ndarray:
         transformed = [self.transformer.transform(x, y) for x, y in points]
         values = np.array([v[0] for v in self.dataset.sample(transformed)], dtype=float)
         if self.nodata is not None:
             values[np.isclose(values, self.nodata)] = np.nan
         return values
+
+    def _sample_many_bilinear(self, points: list[tuple[float, float]]) -> np.ndarray:
+        band = self._load_band1()
+        rows, cols = band.shape
+        inv_transform = ~self.dataset.transform
+        values = np.full(len(points), np.nan, dtype=float)
+
+        for index, (x, y) in enumerate(points):
+            dx, dy = self.transformer.transform(x, y)
+            colf, rowf = inv_transform * (dx, dy)
+            colf -= 0.5
+            rowf -= 0.5
+            col0 = int(np.floor(colf))
+            row0 = int(np.floor(rowf))
+            col1 = col0 + 1
+            row1 = row0 + 1
+
+            if row0 < 0 or row1 >= rows or col0 < 0 or col1 >= cols:
+                continue
+
+            q11 = float(band[row0, col0])
+            q12 = float(band[row0, col1])
+            q21 = float(band[row1, col0])
+            q22 = float(band[row1, col1])
+            if any(self._is_nodata(v) for v in (q11, q12, q21, q22)):
+                continue
+
+            tx = colf - col0
+            ty = rowf - row0
+            top = q11 * (1.0 - tx) + q12 * tx
+            bottom = q21 * (1.0 - tx) + q22 * tx
+            values[index] = top * (1.0 - ty) + bottom * ty
+        return values
+
+    def _load_band1(self) -> np.ndarray:
+        if self._band1 is None:
+            self._band1 = self.dataset.read(1).astype(float, copy=False)
+        return self._band1
 
     def _is_nodata(self, value: float) -> bool:
         if self.nodata is None:
@@ -96,6 +142,7 @@ def sample_terrain(
     smoothing_factor: float = 0.5,
     interpolate_nodata: bool = False,
     dem_crs: str | None = None,
+    resampling: str = "nearest",
 ) -> TerrainGrid:
     sampler = ElevationSampler(dem_path, target_crs, dem_crs)
     try:
@@ -115,7 +162,7 @@ def sample_terrain(
             raise ValueError("Area is too small for the requested terrain resolution.")
 
         points = [(float(x), float(y)) for y in ys for x in xs]
-        values = sampler.sample_many(points).reshape((ys.size, xs.size))
+        values = sampler.sample_many(points, method=resampling).reshape((ys.size, xs.size))
         finite_dem_samples = int(np.isfinite(values).sum())
 
         inside = np.zeros(values.shape, dtype=bool)

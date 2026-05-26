@@ -20,7 +20,7 @@ class _StubSampler:
     def bounds_in_target_crs(self) -> list[float]:
         return [0.0, 0.0, 1.0, 1.0]
 
-    def sample_many(self, points: list[tuple[float, float]]) -> np.ndarray:
+    def sample_many(self, points: list[tuple[float, float]], method: str = "nearest") -> np.ndarray:
         return np.array([10.0, 12.0, 14.0, 16.0], dtype=float)
 
 
@@ -37,7 +37,7 @@ def test_sample_terrain_applies_smoothing_to_valid_samples(monkeypatch):
         def bounds_in_target_crs(self) -> list[float]:
             return [0.0, 0.0, 2.0, 2.0]
 
-        def sample_many(self, points: list[tuple[float, float]]) -> np.ndarray:
+        def sample_many(self, points: list[tuple[float, float]], method: str = "nearest") -> np.ndarray:
             return np.array([10.0, 10.0, 10.0, 10.0, 30.0, 10.0, 10.0, 10.0, 10.0], dtype=float)
 
     monkeypatch.setattr(terrain, "ElevationSampler", SmoothingSampler)
@@ -62,7 +62,7 @@ def test_sample_terrain_interpolates_nodata_inside_area(monkeypatch):
         def bounds_in_target_crs(self) -> list[float]:
             return [0.0, 0.0, 2.0, 2.0]
 
-        def sample_many(self, points: list[tuple[float, float]]) -> np.ndarray:
+        def sample_many(self, points: list[tuple[float, float]], method: str = "nearest") -> np.ndarray:
             return np.array([10.0, 10.0, 10.0, 10.0, np.nan, 14.0, 10.0, 10.0, 10.0], dtype=float)
 
     monkeypatch.setattr(terrain, "ElevationSampler", NodataSampler)
@@ -211,6 +211,47 @@ def test_cli_passes_default_and_custom_z_scale(monkeypatch, tmp_path, capsys):
     capsys.readouterr()
 
     assert captured == [1.0, 3.0]
+
+
+def test_cli_passes_default_and_custom_terrain_resampling(monkeypatch, tmp_path, capsys):
+    captured = []
+
+    def _stub_build_model(options):
+        captured.append(options.terrain_resampling)
+        return {"output": str(options.out_path), "building_count": 0, "faces": 0}
+
+    monkeypatch.setattr(pipeline, "build_model", _stub_build_model)
+    area_path = tmp_path / "area.geojson"
+    dem_path = tmp_path / "dem.tif"
+    area_path.write_text("{}")
+    dem_path.write_text("dem")
+    out_path = tmp_path / "out.stl"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["prog", "--area", str(area_path), "--dem", str(dem_path), "--out", str(out_path)],
+    )
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "prog",
+            "--area",
+            str(area_path),
+            "--dem",
+            str(dem_path),
+            "--out",
+            str(out_path),
+            "--terrain-resampling",
+            "bilinear",
+        ],
+    )
+    cli.main()
+    capsys.readouterr()
+
+    assert captured == ["nearest", "bilinear"]
 
 
 class _FakeMesh:
