@@ -143,6 +143,21 @@ output/my_area_summary.json
 The summary contains DEM bounds, valid terrain samples, interpolated nodata sample counts, building counts, skipped buildings, per-building diagnostics up to `--building-diagnostics-limit`, height source statistics, mesh quality, selected building base mode, and an `options` block for reproducing the run.
 Mesh quality currently includes watertight status, Euler number, volume, bounding box, non-manifold edge count, and degenerate face count.
 
+Validate print thresholds from the summary:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_print.py output\my_area_summary.json `
+  --require-watertight `
+  --max-non-manifold-edges 0 `
+  --max-degenerate-faces 0 `
+  --min-dimension 5 `
+  --max-dimension 300 `
+  --min-volume 1.0 `
+  --format text
+```
+
+The command exits non-zero when any threshold fails, so it can be used in CI checks or batch post-validation.
+
 Print a rerun command from a saved model summary:
 
 ```powershell

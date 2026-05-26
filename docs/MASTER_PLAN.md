@@ -29,7 +29,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 2 - Data and CRS Robustness
 
-- [ ] Add explicit `--dem-crs` fallback only if needed.
+- [x] Add explicit `--dem-crs` fallback only if needed.
 - [x] Improve CRS error messages.
 - [x] Repair invalid geometries more thoroughly.
 - [x] Add field mapping options for height and floor fields.
@@ -64,6 +64,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Add scale option.
 - [x] Add base plate option.
 - [x] Add normal cleanup.
+- [x] Add summary-based print validation helper with threshold checks.
 - [ ] Validate in slicers.
 
 ## Phase 6 - Preview
@@ -85,13 +86,13 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 8 - Local App
 
-- [ ] Streamlit UI.
-- [ ] File pickers.
-- [ ] Option form.
+- [x] Streamlit UI.
+- [x] File pickers.
+- [x] Option form.
 - [ ] Height/floor field selector based on inspected building attributes.
 - [x] Building base mode selector.
 - [ ] Mesh quality summary panel.
-- [ ] Progress/log panel.
+- [x] Progress/log panel.
 - [ ] STL download link.
 - [ ] Preview integration.
 

@@ -8,7 +8,7 @@ from src import cli, pipeline, terrain
 
 
 class _StubSampler:
-    def __init__(self, dem_path: str, target_crs: str):
+    def __init__(self, dem_path: str, target_crs: str, dem_crs: str | None = None):
         self.dem_path = dem_path
         self.target_crs = target_crs
         self.dem_crs = "EPSG:3857"
@@ -140,6 +140,7 @@ def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
         target_crs="EPSG:3857",
         area_crs=None,
         building_crs=None,
+        dem_crs=None,
         terrain_resolution=1.0,
         terrain_smoothing_iterations=0,
         terrain_smoothing_factor=0.5,

@@ -43,15 +43,17 @@ class TerrainDiagnostics:
 
 
 class ElevationSampler:
-    def __init__(self, dem_path: str, target_crs: str):
+    def __init__(self, dem_path: str, target_crs: str, fallback_dem_crs: str | None = None):
         self.dataset = rasterio.open(dem_path)
         self.nodata = self.dataset.nodata
         dem_crs = self.dataset.crs
         if dem_crs is None:
-            raise ValueError(
-                f"DEM CRS is missing for {dem_path}. Re-export the raster as a GeoTIFF with CRS metadata "
-                "before running make_model.py."
-            )
+            if fallback_dem_crs is None:
+                raise ValueError(
+                    f"DEM CRS is missing for {dem_path}. Re-export the raster as a GeoTIFF with CRS metadata "
+                    "or pass --dem-crs with the source CRS before running make_model.py."
+                )
+            dem_crs = CRS.from_string(fallback_dem_crs)
         self.dem_crs = dem_crs
         self.target_crs = target_crs
         self.transformer = Transformer.from_crs(CRS.from_string(target_crs), dem_crs, always_xy=True)
@@ -93,8 +95,9 @@ def sample_terrain(
     smoothing_iterations: int = 0,
     smoothing_factor: float = 0.5,
     interpolate_nodata: bool = False,
+    dem_crs: str | None = None,
 ) -> TerrainGrid:
-    sampler = ElevationSampler(dem_path, target_crs)
+    sampler = ElevationSampler(dem_path, target_crs, dem_crs)
     try:
         minx, miny, maxx, maxy = area.bounds
         area_bounds = [float(minx), float(miny), float(maxx), float(maxy)]
@@ -228,17 +231,20 @@ def smooth_elevations(elevations: np.ndarray, valid: np.ndarray, *, iterations: 
     return smoothed
 
 
-def get_dem_info(dem_path: str, target_crs: str) -> DemInfo:
+def get_dem_info(dem_path: str, target_crs: str, fallback_dem_crs: str | None = None) -> DemInfo:
     with rasterio.open(dem_path) as dataset:
-        if dataset.crs is None:
-            raise ValueError(
-                f"DEM CRS is missing for {dem_path}. Re-export the raster as a GeoTIFF with CRS metadata "
-                "before running make_model.py."
-            )
+        dem_crs = dataset.crs
+        if dem_crs is None:
+            if fallback_dem_crs is None:
+                raise ValueError(
+                    f"DEM CRS is missing for {dem_path}. Re-export the raster as a GeoTIFF with CRS metadata "
+                    "or pass --dem-crs with the source CRS before running make_model.py."
+                )
+            dem_crs = CRS.from_string(fallback_dem_crs)
         bounds = dataset.bounds
-        target_bounds = transform_bounds(dataset.crs, CRS.from_string(target_crs), *bounds)
+        target_bounds = transform_bounds(dem_crs, CRS.from_string(target_crs), *bounds)
         return DemInfo(
-            crs=str(dataset.crs),
+            crs=str(dem_crs),
             bounds=[float(bounds.left), float(bounds.bottom), float(bounds.right), float(bounds.top)],
             bounds_in_target_crs=[float(value) for value in target_bounds],
             width=int(dataset.width),

@@ -118,6 +118,7 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         target_crs=_get_string(job, "target_crs", "EPSG:5179") or "EPSG:5179",
         area_crs=_get_string(job, "area_crs", None),
         building_crs=_get_string(job, "building_crs", None),
+        dem_crs=_get_string(job, "dem_crs", None),
         terrain_resolution=_get_float(job, "terrain_resolution", 10.0),
         terrain_smoothing_iterations=_get_int(job, "terrain_smoothing_iterations", 0),
         terrain_smoothing_factor=_get_float(job, "terrain_smoothing_factor", 0.5),

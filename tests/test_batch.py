@@ -29,6 +29,7 @@ def test_build_options_from_job_maps_cli_like_fields():
             "dem": "data/dem/a.tif",
             "buildings": "data/buildings/a.geojson",
             "out": "output/a.stl",
+            "dem_crs": "EPSG:5186",
             "export_format": ["stl", "obj", "glb", "gltf", "stl"],
             "height_field": ["HEIGHT", "height_m"],
             "floor_field": ["GRND_FLR"],
@@ -49,6 +50,7 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.dem_path == Path("data/dem/a.tif")
     assert options.buildings_path == Path("data/buildings/a.geojson")
     assert options.out_path == Path("output/a.stl")
+    assert options.dem_crs == "EPSG:5186"
     assert options.export_formats == ("stl", "obj", "glb", "gltf")
     assert options.height_fields == ("HEIGHT", "height_m")
     assert options.floor_fields == ("GRND_FLR",)

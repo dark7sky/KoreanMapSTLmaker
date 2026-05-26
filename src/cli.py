@@ -11,6 +11,7 @@ def main() -> None:
     parser.add_argument("--target-crs", default="EPSG:5179", help="Metric CRS used for modeling.")
     parser.add_argument("--area-crs", help="Fallback CRS when area data has none.")
     parser.add_argument("--building-crs", help="Fallback CRS when building data has none.")
+    parser.add_argument("--dem-crs", help="Fallback CRS when DEM raster data has none.")
     parser.add_argument("--terrain-resolution", type=_positive_float, default=10.0, help="Terrain spacing in meters.")
     parser.add_argument(
         "--terrain-smoothing-iterations",
@@ -90,6 +91,7 @@ def main() -> None:
         target_crs=args.target_crs,
         area_crs=args.area_crs,
         building_crs=args.building_crs,
+        dem_crs=args.dem_crs,
         terrain_resolution=args.terrain_resolution,
         terrain_smoothing_iterations=args.terrain_smoothing_iterations,
         terrain_smoothing_factor=args.terrain_smoothing_factor,

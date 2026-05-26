@@ -44,6 +44,12 @@ Run tests from the local virtual environment:
 .\.venv\Scripts\python.exe -m pytest
 ```
 
+Run only the Streamlit scaffold helper tests:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_app_ui_state.py tests\test_app_runner.py
+```
+
 Pytest is configured to use a workspace-local temporary base directory (`.pytest_tmp`) for more reliable execution on Windows.
 
 ## Generate Sample Data
@@ -58,6 +64,14 @@ Or run the full sample workflow:
 
 ```powershell
 .\scripts\run_sample.ps1
+```
+
+## Local Streamlit App (Scaffold)
+
+Launch the local single-page app:
+
+```powershell
+.\.venv\Scripts\streamlit.exe run app\streamlit_app.py
 ```
 
 Then run an end-to-end sample:

@@ -20,6 +20,7 @@ class BuildOptions:
     target_crs: str
     area_crs: Optional[str]
     building_crs: Optional[str]
+    dem_crs: Optional[str]
     terrain_resolution: float
     terrain_smoothing_iterations: int
     terrain_smoothing_factor: float
@@ -59,9 +60,10 @@ def build_model(options: BuildOptions) -> dict:
         smoothing_iterations=options.terrain_smoothing_iterations,
         smoothing_factor=options.terrain_smoothing_factor,
         interpolate_nodata=options.interpolate_nodata,
+        dem_crs=options.dem_crs,
     )
     terrain_mesh = make_terrain_mesh(terrain_grid, options.base_thickness)
-    dem_info = get_dem_info(str(options.dem_path), options.target_crs)
+    dem_info = get_dem_info(str(options.dem_path), options.target_crs, options.dem_crs)
 
     building_result = prepare_buildings(
         options.buildings_path,
@@ -223,6 +225,7 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "target_crs": options.target_crs,
         "area_crs": options.area_crs,
         "building_crs": options.building_crs,
+        "dem_crs": options.dem_crs,
         "terrain_resolution": options.terrain_resolution,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
