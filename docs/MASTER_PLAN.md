@@ -140,7 +140,7 @@ Goal: reduce manual GIS preparation while keeping the current offline-first work
 - [x] Add a provider abstraction for data acquisition (`buildings`, `dem`, `basemap`, `area`).
 - [x] Add VWorld GIS building integrated information fetcher for selected bounds.
 - [x] Convert fetched building features to local GeoJSON/GeoPackage.
-- [ ] Auto-detect and persist building height/floor fields from fetched data.
+- [x] Auto-detect and persist building height/floor fields from fetched data.
 - [ ] Add request paging, retry, rate-limit, and cache handling for API fetches.
 - [x] Add source metadata sidecar files with URL, date, CRS, license, and query bounds.
 - [ ] Add DEM source registry for manually downloaded NGII/Public Data files.

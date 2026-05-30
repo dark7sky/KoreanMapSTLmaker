@@ -16,7 +16,7 @@ def _fixture_feature_collection() -> dict:
         "features": [
             {
                 "type": "Feature",
-                "properties": {"HEIGHT": 12.5, "NAME": "A"},
+                "properties": {"HEIGHT": 12.5, "FLOORS": 4, "NAME": "A"},
                 "geometry": {
                     "type": "Polygon",
                     "coordinates": [[[126.0, 37.0], [126.001, 37.0], [126.001, 37.001], [126.0, 37.001], [126.0, 37.0]]],
@@ -77,6 +77,10 @@ def test_fetch_buildings_geojson_fixture_writes_geojson_metadata_and_cache(tmp_p
     assert metadata["provider"] == "fake-provider"
     assert metadata["source"] == "fixture"
     assert metadata["cache_key"] == build_cache_key("fake-provider", bounds, "EPSG:4326")
+    assert metadata["suggested_height_fields"] == ["HEIGHT"]
+    assert metadata["suggested_floor_fields"] == ["FLOORS"]
+    assert first["suggested_height_fields"] == ["HEIGHT"]
+    assert first["suggested_floor_fields"] == ["FLOORS"]
 
     gdf = gpd.read_file(out_path)
     assert len(gdf) == 1
@@ -160,3 +164,49 @@ def test_fetch_buildings_cli_fixture_mode_runs_without_key(tmp_path, monkeypatch
     fetch_buildings.main()
 
     assert out_path.exists()
+
+
+def test_fetch_buildings_geojson_suggests_korean_and_common_field_names(tmp_path):
+    class FakeProvider:
+        name = "fake-provider"
+
+        def build_request_url(self, bounds: Bounds, crs: str) -> str:
+            return "https://example.com"
+
+        def fetch_feature_collection(self, bounds: Bounds, crs: str) -> dict:
+            return {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "\uac74\ubb3c\ub192\uc774": 30.2,
+                            "\uc9c0\uc0c1\uce35\uc218": 12,
+                            "BLDG_H": 28.1,
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [126.0, 37.0],
+                                    [126.001, 37.0],
+                                    [126.001, 37.001],
+                                    [126.0, 37.001],
+                                    [126.0, 37.0],
+                                ]
+                            ],
+                        },
+                    }
+                ],
+            }
+
+    result = fetch_buildings_geojson(
+        provider=FakeProvider(),
+        bounds=Bounds(126.0, 37.0, 126.1, 37.1),
+        crs="EPSG:4326",
+        out_path=tmp_path / "buildings.geojson",
+        cache_dir=tmp_path / ".cache",
+    )
+
+    assert result["suggested_height_fields"] == ["BLDG_H", "\uac74\ubb3c\ub192\uc774"]
+    assert result["suggested_floor_fields"] == ["\uc9c0\uc0c1\uce35\uc218"]

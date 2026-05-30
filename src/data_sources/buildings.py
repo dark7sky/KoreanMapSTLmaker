@@ -9,6 +9,7 @@ from typing import Any
 import geopandas as gpd
 
 from .base import Bounds, BuildingProvider
+from ..field_suggestions import suggest_fields
 
 
 def fetch_buildings_geojson(
@@ -38,6 +39,9 @@ def fetch_buildings_geojson(
 
     geojson = extract_feature_collection(response)
     gdf = save_feature_collection_as_geojson(geojson=geojson, out_path=out_path, crs=crs)
+    non_geometry_fields = [str(column) for column in gdf.columns if str(column) != "geometry"]
+    suggested_height_fields = suggest_fields(non_geometry_fields, kind="height")
+    suggested_floor_fields = suggest_fields(non_geometry_fields, kind="floor")
     metadata_path = write_source_metadata(
         out_path=out_path,
         provider_name=provider.name,
@@ -47,6 +51,8 @@ def fetch_buildings_geojson(
         source=source,
         request_url=provider.build_request_url(bounds=bounds, crs=crs),
         feature_count=int(len(gdf)),
+        suggested_height_fields=suggested_height_fields,
+        suggested_floor_fields=suggested_floor_fields,
     )
     return {
         "output_path": str(out_path),
@@ -54,6 +60,8 @@ def fetch_buildings_geojson(
         "feature_count": int(len(gdf)),
         "source": source,
         "cache_key": cache_key,
+        "suggested_height_fields": list(suggested_height_fields),
+        "suggested_floor_fields": list(suggested_floor_fields),
     }
 
 
@@ -91,6 +99,8 @@ def write_source_metadata(
     source: str,
     request_url: str,
     feature_count: int,
+    suggested_height_fields: tuple[str, ...],
+    suggested_floor_fields: tuple[str, ...],
 ) -> Path:
     metadata_path = out_path.with_name(f"{out_path.name}.source.json")
     payload = {
@@ -101,6 +111,8 @@ def write_source_metadata(
         "source": source,
         "request_url": request_url,
         "feature_count": feature_count,
+        "suggested_height_fields": list(suggested_height_fields),
+        "suggested_floor_fields": list(suggested_floor_fields),
         "fetched_at": datetime.now(UTC).isoformat(),
     }
     metadata_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
