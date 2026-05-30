@@ -20,6 +20,12 @@ def main() -> None:
         help="DEM sampling method for terrain elevation lookup.",
     )
     parser.add_argument(
+        "--terrain-boundary-mode",
+        choices=("grid", "polygon"),
+        default="grid",
+        help="Terrain boundary handling: grid keeps full-cell edges; polygon clips exactly to selected area boundary.",
+    )
+    parser.add_argument(
         "--terrain-smoothing-iterations",
         type=_non_negative_int,
         default=0,
@@ -105,6 +111,7 @@ def main() -> None:
         dem_crs=args.dem_crs,
         terrain_resolution=args.terrain_resolution,
         terrain_resampling=args.terrain_resampling,
+        terrain_boundary_mode=getattr(args, "terrain_boundary_mode", "grid"),
         terrain_smoothing_iterations=args.terrain_smoothing_iterations,
         terrain_smoothing_factor=args.terrain_smoothing_factor,
         interpolate_nodata=args.interpolate_nodata,

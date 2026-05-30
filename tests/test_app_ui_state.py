@@ -17,6 +17,7 @@ def test_to_build_options_maps_and_normalizes_values():
             "height_fields": " HEIGHT, BUILD_H , ,",
             "floor_fields": ["GRND_FLR", " ", "FLOOR"],
             "export_formats": ["stl", "obj", "stl", "  ", "glb"],
+            "terrain_boundary_mode": "polygon",
         }
     )
 
@@ -32,6 +33,7 @@ def test_to_build_options_maps_and_normalizes_values():
     assert options.height_fields == ("HEIGHT", "BUILD_H")
     assert options.floor_fields == ("GRND_FLR", "FLOOR")
     assert options.export_formats == ("stl", "obj", "glb")
+    assert options.terrain_boundary_mode == "polygon"
 
 
 def test_to_build_options_defaults_export_format_to_stl():

@@ -136,6 +136,7 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         dem_crs=_get_string(job, "dem_crs", None),
         terrain_resolution=_get_float(job, "terrain_resolution", 10.0),
         terrain_resampling=_get_choice(job, "terrain_resampling", "nearest", {"nearest", "bilinear"}),
+        terrain_boundary_mode=_get_choice(job, "terrain_boundary_mode", "grid", {"grid", "polygon"}),
         terrain_smoothing_iterations=_get_int(job, "terrain_smoothing_iterations", 0),
         terrain_smoothing_factor=_get_float(job, "terrain_smoothing_factor", 0.5),
         interpolate_nodata=_get_bool(job, "interpolate_nodata", False),

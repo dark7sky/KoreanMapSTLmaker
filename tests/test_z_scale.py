@@ -112,7 +112,7 @@ def test_pipeline_scales_building_base_z_only(monkeypatch, tmp_path):
             fields=[],
         ),
     )
-    monkeypatch.setattr(pipeline, "make_terrain_mesh", lambda *_: _FakeMesh())
+    monkeypatch.setattr(pipeline, "make_terrain_mesh", lambda *_, **__: _FakeMesh())
     monkeypatch.setattr(
         pipeline,
         "make_building_meshes",

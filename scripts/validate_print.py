@@ -1,6 +1,8 @@
 import argparse
 import json
 import math
+import shlex
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -75,15 +77,48 @@ def main() -> None:
         default="json",
         help="Output format (default: json).",
     )
+    parser.add_argument(
+        "--slicer-check-cmd",
+        default=None,
+        help="Optional external slicer check command template. Supports {summary} and {model} placeholders.",
+    )
+    parser.add_argument(
+        "--model-path",
+        type=Path,
+        default=None,
+        help="Model file path used for {model} in --slicer-check-cmd.",
+    )
+    parser.add_argument(
+        "--slicer-timeout-seconds",
+        type=float,
+        default=120.0,
+        help="Timeout for the external slicer check command (default: 120).",
+    )
+    parser.add_argument(
+        "--include-slicer-template",
+        action="store_true",
+        help="Include a suggested slicer-check command template in the report.",
+    )
     args = parser.parse_args()
 
-    summary = json.loads(args.summary.read_text(encoding="utf-8-sig"))
+    summary_path = args.summary.resolve()
+    summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
     profile_name, thresholds = _effective_thresholds(args)
     report = validate_summary(
         summary,
         profile_name=profile_name,
         **thresholds,
     )
+    slicer_context = _build_slicer_context(summary_path, args.model_path)
+    if args.include_slicer_template:
+        report["slicer_check_template"] = slicer_check_template(slicer_context)
+    if args.slicer_check_cmd:
+        report["slicer_check"] = run_slicer_check(
+            args.slicer_check_cmd,
+            context=slicer_context,
+            timeout_seconds=args.slicer_timeout_seconds,
+        )
+        report["passed"] = report["passed"] and report["slicer_check"]["passed"]
 
     if args.format == "text":
         print(format_text_report(report))
@@ -215,6 +250,18 @@ def format_text_report(report: dict[str, Any]) -> str:
         if recommendation:
             line += f" | {recommendation}"
         lines.append(line)
+    slicer_check = report.get("slicer_check")
+    if isinstance(slicer_check, dict):
+        lines.append(
+            "SLICER_CHECK="
+            + ("PASS" if slicer_check.get("passed") else "FAIL")
+            + f" command={slicer_check.get('command')}"
+        )
+        if slicer_check.get("error"):
+            lines.append(f"SLICER_ERROR={slicer_check['error']}")
+    template = report.get("slicer_check_template")
+    if isinstance(template, str):
+        lines.append(f"SLICER_TEMPLATE={template}")
     return "\n".join(lines)
 
 
@@ -332,6 +379,79 @@ def _hint_value(summary: dict[str, Any], mesh_quality: dict[str, Any], *keys: st
             if value is not None:
                 return value
     return None
+
+
+def _build_slicer_context(summary_path: Path, model_path: Path | None) -> dict[str, str]:
+    resolved_model = model_path.resolve() if model_path is not None else _infer_model_path(summary_path)
+    return {
+        "summary": str(summary_path),
+        "model": str(resolved_model) if resolved_model is not None else "",
+    }
+
+
+def _infer_model_path(summary_path: Path) -> Path | None:
+    if summary_path.name.endswith("_summary.json"):
+        candidate = summary_path.with_name(summary_path.name[: -len("_summary.json")] + ".stl")
+        if candidate.exists():
+            return candidate.resolve()
+    return None
+
+
+def slicer_check_template(context: dict[str, str]) -> str:
+    return (
+        'prusa-slicer-console.exe --export-gcode --load "printer_config.ini" '
+        '--output "output.gcode" "{model}"'
+    ).format_map(context)
+
+
+def run_slicer_check(command_template: str, *, context: dict[str, str], timeout_seconds: float) -> dict[str, Any]:
+    try:
+        command = command_template.format_map(context)
+    except KeyError as exc:
+        return {
+            "passed": False,
+            "command_template": command_template,
+            "error": f"unknown placeholder: {exc}",
+        }
+
+    if "{model}" in command_template and not context.get("model"):
+        return {
+            "passed": False,
+            "command_template": command_template,
+            "error": "model path is required for {model}; pass --model-path or place <name>.stl next to *_summary.json",
+        }
+
+    try:
+        args = shlex.split(command, posix=False)
+    except ValueError as exc:
+        return {
+            "passed": False,
+            "command": command,
+            "error": f"invalid command syntax: {exc}",
+        }
+
+    try:
+        completed = subprocess.run(args, capture_output=True, text=True, timeout=timeout_seconds, check=False)
+    except FileNotFoundError as exc:
+        return {
+            "passed": False,
+            "command": command,
+            "error": f"command not found: {exc}",
+        }
+    except OSError as exc:
+        return {
+            "passed": False,
+            "command": command,
+            "error": f"failed to run command: {exc}",
+        }
+
+    return {
+        "passed": completed.returncode == 0,
+        "command": command,
+        "returncode": completed.returncode,
+        "stdout": completed.stdout,
+        "stderr": completed.stderr,
+    }
 
 
 if __name__ == "__main__":

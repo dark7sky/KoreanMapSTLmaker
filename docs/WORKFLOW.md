@@ -158,6 +158,25 @@ Validate print thresholds from the summary:
 
 The command exits non-zero when any threshold fails, so it can be used in CI checks or batch post-validation.
 
+Optional: include a slicer command template in the validation report:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_print.py output\my_area_summary.json `
+  --include-slicer-template `
+  --format text
+```
+
+Optional: run an external slicer dry-run/check command (only when you provide it):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_print.py output\my_area_summary.json `
+  --slicer-check-cmd "prusa-slicer-console.exe --export-gcode --load printer_config.ini --output output\my_area.gcode {model}" `
+  --model-path output\my_area.stl `
+  --format text
+```
+
+`{summary}` and `{model}` placeholders are supported. If `--model-path` is omitted, the validator tries `<summary_stem>.stl` next to `*_summary.json`.
+
 Print a rerun command from a saved model summary:
 
 ```powershell

@@ -7,9 +7,21 @@ from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import triangulate
 
 from src.terrain import TerrainGrid
+from src.terrain_boundary import make_polygon_clipped_terrain_mesh
 
 
-def make_terrain_mesh(grid: TerrainGrid, base_thickness: float) -> trimesh.Trimesh:
+def make_terrain_mesh(
+    grid: TerrainGrid,
+    base_thickness: float,
+    *,
+    terrain_boundary_mode: str = "grid",
+    boundary_area=None,
+) -> trimesh.Trimesh:
+    if terrain_boundary_mode == "polygon":
+        if boundary_area is None:
+            raise ValueError("boundary_area is required when terrain_boundary_mode='polygon'.")
+        return make_polygon_clipped_terrain_mesh(grid, area=boundary_area, base_thickness=base_thickness)
+
     vertices: list[tuple[float, float, float]] = []
     faces: list[tuple[int, int, int]] = []
     top_index: dict[tuple[int, int], int] = {}

@@ -55,6 +55,7 @@ class BuildOptions:
     building_base_mode: str
     export_formats: tuple[str, ...]
     terrain_resampling: str = "nearest"
+    terrain_boundary_mode: str = "grid"
     z_scale: float = 1.0
     decimate_max_faces: int | None = None
 
@@ -78,7 +79,12 @@ def build_model(options: BuildOptions) -> dict:
         interpolate_nodata=options.interpolate_nodata,
         dem_crs=options.dem_crs,
     )
-    terrain_mesh = make_terrain_mesh(terrain_grid, options.base_thickness)
+    terrain_mesh = make_terrain_mesh(
+        terrain_grid,
+        options.base_thickness,
+        terrain_boundary_mode=options.terrain_boundary_mode,
+        boundary_area=area,
+    )
     dem_info = get_dem_info(str(options.dem_path), options.target_crs, options.dem_crs)
 
     building_result = prepare_buildings(
@@ -196,6 +202,7 @@ def build_model(options: BuildOptions) -> dict:
         "terrain_resampling": options.terrain_resampling,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
+        "terrain_boundary_mode": options.terrain_boundary_mode,
         "terrain_interpolate_nodata": options.interpolate_nodata,
         "terrain_samples": [int(terrain_grid.elevations.shape[1]), int(terrain_grid.elevations.shape[0])],
         "terrain_valid_samples": int(terrain_grid.valid.sum()),
@@ -261,6 +268,8 @@ def _check_options(options: BuildOptions) -> None:
         raise ValueError("terrain_smoothing_iterations must be 0 or greater.")
     if options.terrain_resampling not in {"nearest", "bilinear"}:
         raise ValueError("terrain_resampling must be one of: nearest, bilinear.")
+    if options.terrain_boundary_mode not in {"grid", "polygon"}:
+        raise ValueError("terrain_boundary_mode must be one of: grid, polygon.")
     if not 0 <= options.terrain_smoothing_factor <= 1:
         raise ValueError("terrain_smoothing_factor must be between 0 and 1.")
     if options.building_diagnostics_limit < 0:
@@ -288,6 +297,7 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "dem_crs": options.dem_crs,
         "terrain_resolution": options.terrain_resolution,
         "terrain_resampling": options.terrain_resampling,
+        "terrain_boundary_mode": options.terrain_boundary_mode,
         "terrain_smoothing_iterations": options.terrain_smoothing_iterations,
         "terrain_smoothing_factor": options.terrain_smoothing_factor,
         "interpolate_nodata": options.interpolate_nodata,

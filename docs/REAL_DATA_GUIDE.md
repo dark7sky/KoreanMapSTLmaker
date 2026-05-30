@@ -14,6 +14,31 @@ Use downloaded files first. It is easier to reproduce, does not depend on per-re
 
 No API key is required for this path.
 
+## Phase 1 Offline Real-Data Preflight
+
+Before running `make_model.py` with real files, run the offline validation script:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_real_dataset.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --buildings data\buildings\gis_buildings.shp `
+  --dem data\dem\dem.tif `
+  --target-crs EPSG:5179 `
+  --format text `
+  --json-out output\real_data_validation.json
+```
+
+What this checks without network/API access:
+
+- required files exist and can be opened
+- area/buildings feature counts, geometry types, and CRS presence
+- likely building `height`/`floor` fields based on name matching
+- DEM CRS/bounds/size/band sanity
+- overlap of area vs buildings and area vs DEM in `--target-crs`
+
+Treat any `FAIL` as a blocker before Phase 1 model generation. `WARN` means usable but review recommended.
+
 ## Building Data
 
 Primary candidate:

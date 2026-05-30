@@ -35,6 +35,7 @@ def test_build_options_from_job_maps_cli_like_fields():
             "floor_field": ["GRND_FLR"],
             "z_scale": 1.5,
             "terrain_resampling": "bilinear",
+            "terrain_boundary_mode": "polygon",
             "terrain_smoothing_iterations": 2,
             "terrain_smoothing_factor": 0.25,
             "interpolate_nodata": True,
@@ -59,6 +60,7 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.floor_fields == ("GRND_FLR",)
     assert options.z_scale == 1.5
     assert options.terrain_resampling == "bilinear"
+    assert options.terrain_boundary_mode == "polygon"
     assert options.terrain_smoothing_iterations == 2
     assert options.terrain_smoothing_factor == 0.25
     assert options.interpolate_nodata is True
@@ -101,6 +103,12 @@ def test_build_options_rejects_invalid_numeric_and_list_fields():
     with pytest.raises(ValueError, match="must be one of"):
         run_batch.build_options_from_job(
             {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "terrain_resampling": "cubic"},
+            0,
+        )
+
+    with pytest.raises(ValueError, match="must be one of"):
+        run_batch.build_options_from_job(
+            {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "terrain_boundary_mode": "circle"},
             0,
         )
 

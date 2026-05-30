@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -207,3 +208,89 @@ def test_validate_summary_uses_wall_and_base_hints():
     by_name = {check["name"]: check for check in report["checks"]}
     assert by_name["min_base_thickness"]["passed"] is False
     assert by_name["min_wall_thickness"]["passed"] is False
+
+
+def test_slicer_check_template_includes_model_when_present(tmp_path):
+    summary_path = tmp_path / "my_area_summary.json"
+    model_path = tmp_path / "my_area.stl"
+    summary_path.write_text("{}", encoding="utf-8")
+    model_path.write_text("solid test", encoding="utf-8")
+
+    context = validate_print._build_slicer_context(summary_path, None)
+    template = validate_print.slicer_check_template(context)
+
+    assert str(model_path.resolve()) in template
+
+
+def test_run_slicer_check_reports_error_without_model_placeholder_value(tmp_path):
+    summary_path = tmp_path / "my_area_summary.json"
+    summary_path.write_text("{}", encoding="utf-8")
+    context = validate_print._build_slicer_context(summary_path, None)
+
+    report = validate_print.run_slicer_check(
+        "fake-slicer --check {model}",
+        context=context,
+        timeout_seconds=1.0,
+    )
+
+    assert report["passed"] is False
+    assert "model path is required for {model}" in report["error"]
+
+
+def test_run_slicer_check_uses_subprocess_result(monkeypatch, tmp_path):
+    summary_path = tmp_path / "my_area_summary.json"
+    model_path = tmp_path / "my_area.stl"
+    summary_path.write_text("{}", encoding="utf-8")
+    model_path.write_text("solid test", encoding="utf-8")
+    context = validate_print._build_slicer_context(summary_path, model_path)
+
+    def fake_run(args, capture_output, text, timeout, check):
+        assert args[0] == "fake-slicer"
+        assert capture_output is True
+        assert text is True
+        assert timeout == 2.5
+        assert check is False
+        return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(validate_print.subprocess, "run", fake_run)
+    report = validate_print.run_slicer_check(
+        "fake-slicer --check {model}",
+        context=context,
+        timeout_seconds=2.5,
+    )
+
+    assert report["passed"] is True
+    assert report["returncode"] == 0
+    assert report["stdout"] == "ok"
+
+
+def test_cli_json_includes_slicer_template(tmp_path):
+    summary_path = tmp_path / "model_summary.json"
+    summary_path.write_text(
+        json.dumps(
+            _summary(
+                {
+                    "is_watertight": True,
+                    "non_manifold_edge_count": 0,
+                    "degenerate_face_count": 0,
+                    "bounds": [[0, 0, 0], [10, 10, 10]],
+                    "volume": 1000.0,
+                }
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(Path("scripts") / "validate_print.py"),
+            str(summary_path),
+            "--include-slicer-template",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    payload = json.loads(result.stdout)
+    assert "slicer_check_template" in payload

@@ -47,6 +47,12 @@ def main() -> None:
                 ["nearest", "bilinear"],
                 index=["nearest", "bilinear"].index(defaults["terrain_resampling"]),
             )
+            terrain_boundary_modes = ["grid", "polygon"]
+            terrain_boundary_mode = st.selectbox(
+                "Terrain boundary mode",
+                terrain_boundary_modes,
+                index=terrain_boundary_modes.index(defaults["terrain_boundary_mode"]),
+            )
             base_modes = ["representative", "min", "mean", "min-corners"]
             building_base_mode = st.selectbox(
                 "Building base mode",
@@ -72,6 +78,7 @@ def main() -> None:
                 "floor_fields": floor_fields,
                 "terrain_resolution": terrain_resolution,
                 "terrain_resampling": terrain_resampling,
+                "terrain_boundary_mode": terrain_boundary_mode,
                 "building_base_mode": building_base_mode,
                 "z_scale": z_scale,
                 "export_formats": export_formats,

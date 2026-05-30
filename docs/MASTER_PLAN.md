@@ -48,7 +48,7 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 4 - Terrain Modeling
 
-- [ ] Clip terrain boundary exactly to selected polygon.
+- [x] Clip terrain boundary exactly to selected polygon.
 - [x] Add resampling method options.
 - [x] Add nodata interpolation.
 - [x] Add smoothing.
@@ -65,7 +65,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Add base plate option.
 - [x] Add normal cleanup.
 - [x] Add summary-based print validation helper with threshold checks.
-- [ ] Validate in slicers.
+- [x] Validate in slicers.
 
 ## Phase 6 - Preview
 

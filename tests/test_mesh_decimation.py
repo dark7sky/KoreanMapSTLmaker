@@ -79,7 +79,7 @@ def test_pipeline_summary_includes_decimation_status(monkeypatch, tmp_path):
             origin_y=0.0,
         ),
     )
-    monkeypatch.setattr(pipeline, "make_terrain_mesh", lambda *_: fake_mesh)
+    monkeypatch.setattr(pipeline, "make_terrain_mesh", lambda *_, **__: fake_mesh)
     monkeypatch.setattr(
         pipeline,
         "prepare_buildings",

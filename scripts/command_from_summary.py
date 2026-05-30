@@ -44,6 +44,7 @@ def build_command(summary_path: Path) -> str:
     maybe_add_pair(parts, "--dem-crs", options.get("dem_crs"))
     _maybe_add_number(parts, "--terrain-resolution", options.get("terrain_resolution"))
     maybe_add_pair(parts, "--terrain-resampling", options.get("terrain_resampling"))
+    maybe_add_pair(parts, "--terrain-boundary-mode", options.get("terrain_boundary_mode"))
     _maybe_add_number(parts, "--terrain-smoothing-iterations", options.get("terrain_smoothing_iterations"))
     _maybe_add_number(parts, "--terrain-smoothing-factor", options.get("terrain_smoothing_factor"))
     _maybe_add_number(parts, "--base-thickness", options.get("base_thickness"))
