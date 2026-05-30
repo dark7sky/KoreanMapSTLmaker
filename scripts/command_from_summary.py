@@ -52,6 +52,7 @@ def build_command(summary_path: Path) -> str:
     _maybe_add_number(parts, "--min-building-area", options.get("min_building_area"))
     _maybe_add_number(parts, "--simplify-tolerance", options.get("simplify_tolerance"))
     _maybe_add_number(parts, "--model-scale", options.get("model_scale"))
+    _maybe_add_number(parts, "--decimate-max-faces", options.get("decimate_max_faces"))
     _maybe_add_number(parts, "--base-plate-thickness", options.get("base_plate_thickness"))
     _maybe_add_number(parts, "--base-plate-margin", options.get("base_plate_margin"))
     _maybe_add_number(parts, "--max-area-km2", options.get("max_area_km2"))

@@ -43,6 +43,7 @@ def test_build_command_from_summary_options(tmp_path):
                     "export_formats": ["stl", "obj", "gltf"],
                     "interpolate_nodata": True,
                     "z_scale": 1.5,
+                    "decimate_max_faces": 2500,
                 }
             }
         ),
@@ -61,6 +62,7 @@ def test_build_command_from_summary_options(tmp_path):
     assert "--terrain-smoothing-factor 0.25" in command
     assert "--simplify-tolerance 0.1" in command
     assert "--model-scale 0.5" in command
+    assert "--decimate-max-faces 2500" in command
     assert "--base-plate-thickness 1.0" in command
     assert "--base-plate-margin 2.0" in command
     assert "--building-diagnostics-limit 12" in command

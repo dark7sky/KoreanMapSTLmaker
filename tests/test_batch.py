@@ -42,6 +42,8 @@ def test_build_options_from_job_maps_cli_like_fields():
             "base_plate_thickness": 1.25,
             "base_plate_margin": 2.5,
             "building_diagnostics_limit": 12,
+            "building_base_mode": "min-corners",
+            "decimate_max_faces": 5000,
             "separate": True,
         },
         0,
@@ -64,6 +66,8 @@ def test_build_options_from_job_maps_cli_like_fields():
     assert options.base_plate_thickness == 1.25
     assert options.base_plate_margin == 2.5
     assert options.building_diagnostics_limit == 12
+    assert options.building_base_mode == "min-corners"
+    assert options.decimate_max_faces == 5000
     assert options.separate is True
 
 
@@ -97,6 +101,18 @@ def test_build_options_rejects_invalid_numeric_and_list_fields():
     with pytest.raises(ValueError, match="must be one of"):
         run_batch.build_options_from_job(
             {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "terrain_resampling": "cubic"},
+            0,
+        )
+
+    with pytest.raises(ValueError, match="must be an integer"):
+        run_batch.build_options_from_job(
+            {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "decimate_max_faces": 1.5},
+            0,
+        )
+
+    with pytest.raises(ValueError, match="must be one of"):
+        run_batch.build_options_from_job(
+            {"area": "a.geojson", "dem": "a.tif", "out": "a.stl", "building_base_mode": "dem_min"},
             0,
         )
 

@@ -19,6 +19,7 @@ from src.export import (
 )
 from src.io import load_area
 from src.mesh import add_base_plate, make_building_meshes, make_terrain_mesh, merge_meshes, scale_mesh
+from src.mesh_decimation import maybe_decimate_mesh
 from src.mesh_quality import mesh_summary
 from src.terrain import bounds_overlap, get_dem_info, sample_terrain
 
@@ -55,6 +56,7 @@ class BuildOptions:
     export_formats: tuple[str, ...]
     terrain_resampling: str = "nearest"
     z_scale: float = 1.0
+    decimate_max_faces: int | None = None
 
 
 def build_model(options: BuildOptions) -> dict:
@@ -112,6 +114,7 @@ def build_model(options: BuildOptions) -> dict:
         thickness=options.base_plate_thickness,
     )
     combined_mesh = scale_mesh(combined_mesh, options.model_scale)
+    combined_mesh, decimation = maybe_decimate_mesh(combined_mesh, options.decimate_max_faces)
     normals_cleaned = cleanup_normals(combined_mesh)
     terrain_visual_mesh = None
     buildings_visual_mesh = None
@@ -217,6 +220,15 @@ def build_model(options: BuildOptions) -> dict:
         "vertices": int(len(combined_mesh.vertices)),
         "faces": int(len(combined_mesh.faces)),
         "mesh_quality": mesh_summary(combined_mesh),
+        "mesh_decimation": {
+            "requested": decimation.requested,
+            "applied": decimation.applied,
+            "skipped_reason": decimation.skipped_reason,
+            "backend": decimation.backend,
+            "original_faces": decimation.original_faces,
+            "target_faces": decimation.target_faces,
+            "result_faces": decimation.result_faces,
+        },
         "normal_cleanup_applied": normals_cleaned,
         "bounds": bounds,
         "output": output_paths[options.export_formats[0]],
@@ -296,6 +308,7 @@ def _summary_options(options: BuildOptions) -> dict[str, object]:
         "building_base_mode": options.building_base_mode,
         "export_formats": list(options.export_formats),
         "z_scale": options.z_scale,
+        "decimate_max_faces": options.decimate_max_faces,
     }
 
 

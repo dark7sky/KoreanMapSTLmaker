@@ -127,6 +127,15 @@ def _sample_building_base_elevation(polygon: Polygon, sampler: ElevationSampler,
     if mode == "representative":
         point = polygon.representative_point()
         return sampler.sample_one(point.x, point.y)
+    if mode == "min-corners":
+        elevations = [
+            elevation
+            for x, y in _building_corner_sample_points(polygon)
+            if not _is_nan(elevation := sampler.sample_one(x, y))
+        ]
+        if not elevations:
+            return float("nan")
+        return min(elevations)
     if mode not in {"min", "mean"}:
         raise ValueError(f"Unsupported building base elevation mode: {mode}")
 
@@ -145,6 +154,10 @@ def _sample_building_base_elevation(polygon: Polygon, sampler: ElevationSampler,
 def _building_base_sample_points(polygon: Polygon):
     point = polygon.representative_point()
     yield point.x, point.y
+    yield from _building_corner_sample_points(polygon)
+
+
+def _building_corner_sample_points(polygon: Polygon):
     coords = list(polygon.exterior.coords)
     if len(coords) > 1 and coords[0] == coords[-1]:
         coords = coords[:-1]

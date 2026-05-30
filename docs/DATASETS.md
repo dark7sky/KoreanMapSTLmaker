@@ -77,7 +77,7 @@ The command validates that:
 - every dataset has a unique non-empty `name`
 - every dataset has non-empty string paths for `area`, `dem`, and `buildings`
 - optional `target_crs`, `area_crs`, `building_crs`, and `notes` are non-empty strings when present
-- optional `building_base_mode` is one of `representative`, `min`, or `mean`
+- optional `building_base_mode` is one of `representative`, `min`, `mean`, or `min-corners`
 - optional `height_fields` and `floor_fields` are non-empty lists of non-empty strings when present
 - optional `coverage_bounds` is a list of four numeric values in `[minx, miny, maxx, maxy]` order when present
 - optional `source_date`, `license`, and `source_url` are non-empty strings when present

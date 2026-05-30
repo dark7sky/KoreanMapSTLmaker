@@ -89,6 +89,42 @@ def test_prepare_buildings_mean_ignores_missing_samples(monkeypatch):
     assert result.buildings[0].base_z == 8.0
 
 
+def test_prepare_buildings_uses_min_corners_sampled_base(monkeypatch):
+    polygon = box(0, 0, 2, 2)
+    monkeypatch.setattr(buildings, "load_buildings", lambda *_: _building_gdf(polygon))
+    monkeypatch.setattr(buildings, "ElevationSampler", StubElevationSampler)
+    StubElevationSampler.samples = {
+        (1.0, 1.0): 30.0,
+        (2.0, 0.0): 18.0,
+        (2.0, 2.0): 15.0,
+        (0.0, 2.0): 17.0,
+        (0.0, 0.0): 19.0,
+    }
+
+    result = _prepare(polygon, base_elevation_mode="min-corners")
+
+    assert len(result.buildings) == 1
+    assert result.buildings[0].base_z == 5.0
+
+
+def test_prepare_buildings_min_corners_ignores_representative_sample(monkeypatch):
+    polygon = box(0, 0, 2, 2)
+    monkeypatch.setattr(buildings, "load_buildings", lambda *_: _building_gdf(polygon))
+    monkeypatch.setattr(buildings, "ElevationSampler", StubElevationSampler)
+    StubElevationSampler.samples = {
+        (1.0, 1.0): float("nan"),
+        (2.0, 0.0): 21.0,
+        (2.0, 2.0): 16.0,
+        (0.0, 2.0): 17.0,
+        (0.0, 0.0): 18.0,
+    }
+
+    result = _prepare(polygon, base_elevation_mode="min-corners")
+
+    assert len(result.buildings) == 1
+    assert result.buildings[0].base_z == 6.0
+
+
 def _building_gdf(polygon):
     return gpd.GeoDataFrame([{"geometry": polygon}], geometry="geometry", crs="EPSG:3857")
 

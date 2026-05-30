@@ -1,6 +1,11 @@
 # Data Sources and Automation Plan
 
-This project currently works best with local files:
+Phase 13 data acquisition supports two explicit modes:
+
+- keyless offline mode: fully local files, no API key, no provider login
+- key-required online-assisted mode: live building fetch with `VWORLD_API_KEY`, then local reuse
+
+This project still works best with local files:
 
 - area polygon: GeoJSON
 - terrain: GeoTIFF DEM
@@ -57,7 +62,7 @@ Expected location:
 data/dem/my_region_dem.tif
 ```
 
-If a DEM source is not GeoTIFF, convert it with QGIS/GDAL before modeling, or use the planned `import_dem.py` helper once implemented.
+If a DEM source is not GeoTIFF, convert it with QGIS/GDAL before modeling, or use `scripts/import_dem.py`.
 
 ## What Can Be Automated
 
@@ -83,9 +88,50 @@ If a DEM source is not GeoTIFF, convert it with QGIS/GDAL before modeling, or us
 - Downloading datasets whose license or portal flow requires explicit user action.
 - Using 3D tile/model services as printable building geometry, because licenses, formats, and access rules may differ from simple building footprints.
 
-## Planned CLI Commands
+## Current CLI Workflows
 
-### Fetch buildings
+### 1) Keyless offline mode (no API key required)
+
+Use local area/building/DEM files only.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\inspect_data.py `
+  --area data\areas\my_area.geojson `
+  --area-crs EPSG:4326 `
+  --buildings data\buildings\my_area_buildings.geojson `
+  --dem data\dem\my_region_dem.tif
+```
+
+If DEM candidate files are already indexed in `datasets.json`, find overlapping tiles:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\find_dem_tiles.py `
+  --registry datasets.json `
+  --area data\areas\my_area.geojson `
+  --area-crs EPSG:4326 `
+  --target-crs EPSG:5179 `
+  --limit 5
+```
+
+Import/register a downloaded DEM as local GeoTIFF and validate overlap:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\import_dem.py `
+  --source downloads\dem\raw_dem.tif `
+  --out data\dem\my_region_dem.tif `
+  --target-crs EPSG:5179 `
+  --reproject `
+  --registry datasets.json `
+  --validate-area data\areas\my_area.geojson `
+  --validate-area-crs EPSG:4326
+```
+
+Notes:
+
+- `import_dem.py` does not download from portals. It imports local source files you already obtained.
+- Source issuance/login/approval flows (NGII/Public Data portals) are external and not automated by this repo.
+
+### 2) Key-required online-assisted mode (live building fetch)
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\fetch_buildings.py `
@@ -93,28 +139,60 @@ If a DEM source is not GeoTIFF, convert it with QGIS/GDAL before modeling, or us
   --area-crs EPSG:4326 `
   --provider vworld-gis-building `
   --out data\buildings\my_area_buildings.geojson `
-  --cache-dir .cache\data_sources
+  --cache-dir .cache\data_sources `
+  --validate-area data\areas\my_area.geojson `
+  --validate-area-crs EPSG:4326
 ```
 
-Configuration:
+Load key from `.env` (recommended):
 
 ```powershell
-$env:VWORLD_API_KEY = "..."
+Set-Content .env "VWORLD_API_KEY=your-issued-key"
+.\.venv\Scripts\python.exe scripts\fetch_buildings.py `
+  --area data\areas\my_area.geojson `
+  --area-crs EPSG:4326 `
+  --provider vworld-gis-building `
+  --out data\buildings\my_area_buildings.geojson `
+  --env-file .env
 ```
 
-The command should fail clearly when a key is required but missing, and should never require a key for existing local files.
+Or set it only for current PowerShell session:
 
-### Import DEM
+```powershell
+$env:VWORLD_API_KEY = "your-issued-key"
+```
+
+Offline simulation without live API key (fixture response):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\fetch_buildings.py `
+  --bounds 126.9789 37.5660 126.9820 37.5682 `
+  --crs EPSG:4326 `
+  --out data\buildings\fixture_buildings.geojson `
+  --fixture-response tests\fixtures\vworld_buildings_response.json
+```
+
+Behavior notes:
+
+- Live mode requires `VWORLD_API_KEY`; missing key fails clearly.
+- API key issuance and any provider account/login approval are external/manual steps.
+- Live responses are cached in `.cache\data_sources` keyed by provider+bounds+CRS.
+- The VWorld provider implementation applies paging and retry handling internally.
+- `--validate-area` / `--validate-area-crs` runs overlap validation after fetch.
+
+### 3) DEM import and registration (both modes)
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\import_dem.py `
-  --source downloads\dem_source_file `
+  --source downloads\dem_source_file.tif `
   --out data\dem\my_region_dem.tif `
   --target-crs EPSG:5179 `
-  --registry datasets.json
+  --registry datasets.json `
+  --validate-area data\areas\my_area.geojson `
+  --validate-area-crs EPSG:4326
 ```
 
-The helper should preserve source metadata and write a sidecar JSON file.
+The command updates local DEM files and registry metadata. It does not perform portal login or dataset purchase/issuance flows.
 
 ## Implementation Tasks
 
@@ -125,7 +203,7 @@ The helper should preserve source metadata and write a sidecar JSON file.
 5. Add CRS/bounds validation after every fetch/import.
 6. Add dataset registry write/update helpers.
 7. Add Streamlit data-prep tab.
-8. Add docs for online and offline workflows.
+8. Add docs for online and offline workflows. (done)
 
 ## Official Source Notes
 

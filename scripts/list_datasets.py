@@ -18,7 +18,7 @@ OPTIONAL_DATASET_FIELDS = (
     "source_url",
     "notes",
 )
-BUILDING_BASE_MODES = ("representative", "min", "mean")
+BUILDING_BASE_MODES = ("representative", "min", "mean", "min-corners")
 
 
 def main() -> None:

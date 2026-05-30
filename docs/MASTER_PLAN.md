@@ -42,7 +42,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Support polygon holes.
 - [x] Add footprint simplification option.
 - [x] Add building base mode selector: representative/min/mean.
-- [ ] Add sloped terrain policy for building base.
+- [x] Add sloped terrain policy for building base.
 - [x] Add per-building diagnostics.
 - [x] Report selected base elevation mode in summary JSON.
 
@@ -52,7 +52,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Add resampling method options.
 - [x] Add nodata interpolation.
 - [x] Add smoothing.
-- [ ] Add mesh decimation.
+- [x] Add mesh decimation.
 - [ ] Add chunked processing for large areas.
 
 ## Phase 5 - Print-Ready STL
@@ -147,8 +147,8 @@ Goal: reduce manual GIS preparation while keeping the current offline-first work
 - [x] Add optional DEM tile finder based on selected bounds and local metadata.
 - [x] Add DEM conversion helper to GeoTIFF when source files are not already GeoTIFF.
 - [x] Add automatic overlap validation after download/import.
-- [ ] Add Streamlit data-prep screen: select area, fetch/import buildings, attach DEM, run inspection.
+- [x] Add Streamlit data-prep screen: select area, fetch/import buildings, attach DEM, run inspection.
 - [x] Add CLI command `scripts/fetch_buildings.py` for repeatable building-data fetches.
 - [x] Add CLI command `scripts/import_dem.py` for DEM registration/conversion.
 - [x] Add tests using mocked API responses and tiny raster/vector fixtures.
-- [ ] Add docs for key-required online mode and keyless offline mode.
+- [x] Add docs for key-required online mode and keyless offline mode.

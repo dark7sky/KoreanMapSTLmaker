@@ -76,6 +76,12 @@ def _get_int(job: dict[str, Any], key: str, default: int) -> int:
     return parsed
 
 
+def _get_optional_int(job: dict[str, Any], key: str) -> int | None:
+    if key not in job or job.get(key) is None:
+        return None
+    return _get_int(job, key, 0)
+
+
 def _get_string(job: dict[str, Any], key: str, default: str | None) -> str | None:
     value = job.get(key, default)
     if value is None:
@@ -147,9 +153,15 @@ def build_options_from_job(job: dict[str, Any], job_index: int) -> BuildOptions:
         preview=_get_bool(job, "preview", False),
         height_fields=_get_tuple_of_strings(job, "height_field"),
         floor_fields=_get_tuple_of_strings(job, "floor_field"),
-        building_base_mode=_get_string(job, "building_base_mode", "representative") or "representative",
+        building_base_mode=_get_choice(
+            job,
+            "building_base_mode",
+            "representative",
+            {"representative", "min", "mean", "min-corners"},
+        ),
         export_formats=_get_export_formats(job),
         z_scale=_get_float(job, "z_scale", 1.0),
+        decimate_max_faces=_get_optional_int(job, "decimate_max_faces"),
     )
 
 

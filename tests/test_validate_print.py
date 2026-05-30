@@ -32,6 +32,7 @@ def test_validate_summary_passes_with_defaults():
     )
 
     assert report["passed"] is True
+    assert report["profile"] == "default"
     assert [check["name"] for check in report["checks"]] == [
         "max_non_manifold_edges",
         "max_degenerate_faces",
@@ -145,4 +146,64 @@ def test_cli_text_output_fails_with_nonzero_exit(tmp_path):
 
     assert result.returncode == 1
     assert "PASS=False" in result.stdout
-    assert "FAIL watertight" in result.stdout
+    assert "FAIL Mesh is watertight" in result.stdout
+    assert "Repair open boundaries before slicing" in result.stdout
+
+
+def test_cli_strict_uses_fdm_profile(tmp_path):
+    summary_path = tmp_path / "model_summary.json"
+    summary_path.write_text(
+        json.dumps(
+            _summary(
+                {
+                    "is_watertight": True,
+                    "non_manifold_edge_count": 0,
+                    "degenerate_face_count": 0,
+                    "bounds": [[0, 0, 0], [4.0, 4.0, 2.0]],
+                    "volume": 0.5,
+                }
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(Path("scripts") / "validate_print.py"), str(summary_path), "--strict", "--format", "text"],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "PROFILE=fdm" in result.stdout
+    assert "FAIL Smallest bbox dimension above minimum" in result.stdout
+    assert "FAIL Volume above minimum" in result.stdout
+
+
+def test_validate_summary_uses_wall_and_base_hints():
+    report = validate_print.validate_summary(
+        {
+            "mesh_quality": {
+                "is_watertight": True,
+                "non_manifold_edge_count": 0,
+                "degenerate_face_count": 0,
+                "bounds": [[0, 0, 0], [10, 10, 5]],
+                "volume": 20.0,
+            },
+            "base_thickness_hint": 0.6,
+            "wall_thickness_hint": 0.3,
+        },
+        profile_name="resin",
+        require_watertight=True,
+        max_non_manifold_edges=0,
+        max_degenerate_faces=0,
+        min_dimension=3.0,
+        max_dimension=140.0,
+        min_volume=0.2,
+        min_base_thickness=0.8,
+        min_wall_thickness=0.4,
+    )
+
+    assert report["passed"] is False
+    by_name = {check["name"]: check for check in report["checks"]}
+    assert by_name["min_base_thickness"]["passed"] is False
+    assert by_name["min_wall_thickness"]["passed"] is False

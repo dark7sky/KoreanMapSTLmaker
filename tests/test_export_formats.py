@@ -129,6 +129,55 @@ def test_cli_passes_simplify_tolerance(monkeypatch):
     assert captured["simplify_tolerance"] == 1.25
 
 
+def test_cli_passes_decimate_max_faces(monkeypatch):
+    captured = {}
+
+    def fake_parse_args(self):
+        return Namespace(
+            area=Path("area.geojson"),
+            buildings=None,
+            dem=Path("dem.tif"),
+            out=Path("model.stl"),
+            target_crs="EPSG:5179",
+            area_crs=None,
+            building_crs=None,
+            dem_crs=None,
+            terrain_resolution=10.0,
+            terrain_resampling="nearest",
+            terrain_smoothing_iterations=0,
+            terrain_smoothing_factor=0.5,
+            interpolate_nodata=False,
+            base_thickness=2.0,
+            default_floor_height=3.0,
+            default_building_height=6.0,
+            min_building_area=4.0,
+            simplify_tolerance=0.0,
+            model_scale=1.0,
+            decimate_max_faces=2500,
+            base_plate_thickness=0.0,
+            base_plate_margin=0.0,
+            max_area_km2=4.0,
+            building_diagnostics_limit=200,
+            separate=False,
+            export_format=None,
+            preview=False,
+            height_field=None,
+            floor_field=None,
+            building_base_mode="representative",
+        )
+
+    def fake_build_model(options):
+        captured["decimate_max_faces"] = options.decimate_max_faces
+        return {"output": "model.stl", "building_count": 0, "faces": 0}
+
+    monkeypatch.setattr(src.cli.argparse.ArgumentParser, "parse_args", fake_parse_args)
+    monkeypatch.setattr("src.pipeline.build_model", fake_build_model)
+
+    src.cli.main()
+
+    assert captured["decimate_max_faces"] == 2500
+
+
 def test_cli_passes_print_ready_options(monkeypatch):
     captured = {}
 

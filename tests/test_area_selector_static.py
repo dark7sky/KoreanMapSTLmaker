@@ -41,6 +41,7 @@ def test_area_selector_declares_expected_controls_and_defaults():
     assert '<option value="representative">representative</option>' in html
     assert '<option value="min">min</option>' in html
     assert '<option value="mean">mean</option>' in html
+    assert '<option value="min-corners">min-corners</option>' in html
 
 
 def test_area_selector_command_template_matches_workflow_contract():

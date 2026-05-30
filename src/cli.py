@@ -49,6 +49,11 @@ def main() -> None:
     )
     parser.add_argument("--model-scale", type=_positive_float, default=1.0, help="Uniformly scale the final model.")
     parser.add_argument(
+        "--decimate-max-faces",
+        type=_non_negative_int,
+        help="Optional target max face count for final mesh decimation (opt-in).",
+    )
+    parser.add_argument(
         "--base-plate-thickness",
         type=_non_negative_float,
         default=0.0,
@@ -79,7 +84,7 @@ def main() -> None:
     parser.add_argument("--floor-field", action="append", help="Preferred floor-count field. Can be repeated.")
     parser.add_argument(
         "--building-base-mode",
-        choices=("representative", "min", "mean"),
+        choices=("representative", "min", "mean", "min-corners"),
         default="representative",
         help="How to sample terrain elevation under each building footprint.",
     )
@@ -120,6 +125,7 @@ def main() -> None:
         building_base_mode=args.building_base_mode,
         z_scale=getattr(args, "z_scale", 1.0),
         export_formats=export_formats,
+        decimate_max_faces=getattr(args, "decimate_max_faces", None),
     )
     summary = build_model(options)
     print(f"Output: {summary['output']}")

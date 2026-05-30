@@ -2,7 +2,7 @@
 
 This guide is for replacing the sample files with real Korean DEM and building data.
 
-## Recommended Offline-First Path
+## Recommended Offline-First Path (Keyless)
 
 Use downloaded files first. It is easier to reproduce, does not depend on per-request API limits, and works well with the current CLI.
 
@@ -11,6 +11,8 @@ Use downloaded files first. It is easier to reproduce, does not depend on per-re
 3. Download building footprints as SHP/GPKG/GeoJSON.
 4. Inspect all inputs before generating a model.
 5. Register reusable datasets in `datasets.json`.
+
+No API key is required for this path.
 
 ## Building Data
 
@@ -30,7 +32,8 @@ Notes:
 
 - Prefer file download for this project when possible.
 - API use may require an application/key, and traffic limits may vary by provider policy.
-- The online-assisted building fetcher is planned, not complete yet.
+- For fully offline runs, skip live API fetch and use downloaded files.
+- API key issuance/login flows are external to this repo and may require separate portal approval.
 - After download, inspect fields with:
 
 ```powershell
@@ -42,6 +45,31 @@ Notes:
 ```
 
 Choose the height field with `--height-field` if a measured height field exists. If only floor count exists, pass it with `--floor-field` and tune `--default-floor-height`.
+
+Optional online-assisted fetch (key required):
+
+```powershell
+Set-Content .env "VWORLD_API_KEY=your-issued-key"
+.\.venv\Scripts\python.exe scripts\fetch_buildings.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --provider vworld-gis-building `
+  --out data\buildings\area_buildings.geojson `
+  --cache-dir .cache\data_sources `
+  --validate-area data\areas\area.geojson `
+  --validate-area-crs EPSG:4326 `
+  --env-file .env
+```
+
+Offline simulation with fixture JSON (no key):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\fetch_buildings.py `
+  --bounds 126.9789 37.5660 126.9820 37.5682 `
+  --crs EPSG:4326 `
+  --out data\buildings\fixture_buildings.geojson `
+  --fixture-response tests\fixtures\vworld_buildings_response.json
+```
 
 ## DEM Data
 
@@ -62,6 +90,30 @@ Notes:
 - If the downloaded DEM is another raster format, convert it to GeoTIFF in QGIS/GDAL before running `make_model.py`.
 - Keep the DEM CRS embedded in the file. A missing raster CRS is treated as an error unless a safe explicit fallback is supported by the command.
 - If small nodata holes appear inside the selected area, add `--interpolate-nodata`.
+
+Register/import downloaded DEM and validate overlap:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\import_dem.py `
+  --source downloads\dem\dem_source.tif `
+  --out data\dem\dem.tif `
+  --target-crs EPSG:5179 `
+  --reproject `
+  --registry datasets.json `
+  --validate-area data\areas\area.geojson `
+  --validate-area-crs EPSG:4326
+```
+
+Find candidate DEM tiles from registry before import:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\find_dem_tiles.py `
+  --registry datasets.json `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --target-crs EPSG:5179 `
+  --limit 5
+```
 
 ## CRS Checklist
 
@@ -120,3 +172,4 @@ The intended direction is:
 - keep local/offline files as the reliable default
 - optionally fetch building data when a VWorld/Public Data key is configured
 - import/register DEM files after the user downloads them from NGII/Public Data sources
+- use fixture responses for repeatable offline testing of fetch logic
