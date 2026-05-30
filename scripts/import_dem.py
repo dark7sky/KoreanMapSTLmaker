@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.dem_import import import_dem, update_dem_registry, write_sidecar
+from src.data_sources.validation import validate_area_overlaps_dem
 
 
 def main() -> None:
@@ -26,6 +27,11 @@ def main() -> None:
     parser.add_argument("--source-url", help="Optional source URL.")
     parser.add_argument("--name", help="Registry name. Defaults to output stem.")
     parser.add_argument("--registry", type=Path, help="Optional registry JSON path for dem_datasets entry updates.")
+    parser.add_argument("--validate-area", type=Path, help="Optional area file used to validate DEM overlap.")
+    parser.add_argument(
+        "--validate-area-crs",
+        help="Fallback CRS when --validate-area has no CRS metadata.",
+    )
     args = parser.parse_args()
 
     source = args.source.resolve()
@@ -55,6 +61,22 @@ def main() -> None:
             license_name=args.license_name,
             source_url=args.source_url,
         )
+
+    if args.validate_area:
+        validation_target_crs = args.target_crs or metadata["crs"]
+        validation = validate_area_overlaps_dem(
+            area_path=args.validate_area,
+            dem_path=output,
+            target_crs=validation_target_crs,
+            area_crs=args.validate_area_crs,
+        )
+        if not validation.overlaps:
+            raise SystemExit(
+                "Imported DEM does not overlap the validation area. "
+                f"target_crs={validation.target_crs}; area_bounds={validation.area_bounds}; "
+                f"dem_bounds={validation.source_bounds}; "
+                "check --validate-area/--validate-area-crs and --target-crs."
+            )
 
     print(f"Imported DEM: {output}")
     print(f"Metadata sidecar: {sidecar_path}")

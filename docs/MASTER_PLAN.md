@@ -71,9 +71,9 @@ This project should evolve in phases so another agent can resume work at any poi
 
 - [x] Generate `preview.html`.
 - [x] Add Three.js viewer.
-- [ ] Add terrain/building color distinction.
+- [x] Add terrain/building color distinction.
 - [x] Add summary panel.
-- [ ] Add offline/local Three.js assets option.
+- [x] Add offline/local Three.js assets option.
 
 ## Phase 7 - Map Area Selection
 
@@ -136,17 +136,17 @@ This project should evolve in phases so another agent can resume work at any poi
 
 Goal: reduce manual GIS preparation while keeping the current offline-first workflow reliable.
 
-- [ ] Add `.env` / environment-variable configuration for optional API keys.
+- [x] Add `.env` / environment-variable configuration for optional API keys.
 - [x] Add a provider abstraction for data acquisition (`buildings`, `dem`, `basemap`, `area`).
 - [x] Add VWorld GIS building integrated information fetcher for selected bounds.
 - [x] Convert fetched building features to local GeoJSON/GeoPackage.
 - [x] Auto-detect and persist building height/floor fields from fetched data.
-- [ ] Add request paging, retry, rate-limit, and cache handling for API fetches.
+- [x] Add request paging, retry, rate-limit, and cache handling for API fetches.
 - [x] Add source metadata sidecar files with URL, date, CRS, license, and query bounds.
-- [ ] Add DEM source registry for manually downloaded NGII/Public Data files.
-- [ ] Add optional DEM tile finder based on selected bounds and local metadata.
+- [x] Add DEM source registry for manually downloaded NGII/Public Data files.
+- [x] Add optional DEM tile finder based on selected bounds and local metadata.
 - [x] Add DEM conversion helper to GeoTIFF when source files are not already GeoTIFF.
-- [ ] Add automatic overlap validation after download/import.
+- [x] Add automatic overlap validation after download/import.
 - [ ] Add Streamlit data-prep screen: select area, fetch/import buildings, attach DEM, run inspection.
 - [x] Add CLI command `scripts/fetch_buildings.py` for repeatable building-data fetches.
 - [x] Add CLI command `scripts/import_dem.py` for DEM registration/conversion.

@@ -11,6 +11,8 @@ import geopandas as gpd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data_sources import Bounds, VWorldGISBuildingProvider, fetch_buildings_geojson
+from src.data_sources.config import load_env_file, load_optional_env_file
+from src.data_sources.validation import validate_area_overlaps_vector
 
 
 def main() -> None:
@@ -23,9 +25,25 @@ def main() -> None:
     parser.add_argument("--data-name", default="LT_C_UQ111", help="VWorld data layer name.")
     parser.add_argument("--crs", default="EPSG:4326", help="Coordinate reference system used for request bounds.")
     parser.add_argument("--out", required=True, type=Path, help="Output GeoJSON path.")
+    parser.add_argument(
+        "--validate-area",
+        type=Path,
+        help="Optional area file used to validate overlap against fetched buildings.",
+    )
+    parser.add_argument(
+        "--validate-area-crs",
+        help="Fallback CRS when --validate-area has no CRS metadata.",
+    )
     parser.add_argument("--cache-dir", type=Path, default=Path(".cache/data_sources"))
     parser.add_argument("--fixture-response", type=Path, help="Local JSON response for offline test/simulation mode.")
+    parser.add_argument("--env-file", type=Path, help="Optional .env file to load before reading API keys.")
     args = parser.parse_args()
+
+    project_env_path = Path(__file__).resolve().parents[1] / ".env"
+    if args.env_file:
+        load_env_file(args.env_file)
+    else:
+        load_optional_env_file(project_env_path)
 
     bounds = resolve_bounds(args.area, args.area_crs, args.bounds)
     fixture_response = None
@@ -50,6 +68,24 @@ def main() -> None:
         cache_dir=args.cache_dir,
         fixture_response=fixture_response,
     )
+
+    validate_area = args.validate_area or args.area
+    if validate_area:
+        validation = validate_area_overlaps_vector(
+            area_path=validate_area,
+            vector_path=args.out,
+            target_crs=args.crs,
+            area_crs=args.validate_area_crs or args.area_crs,
+            vector_crs=args.crs,
+            source_label="building",
+        )
+        if not validation.overlaps:
+            raise SystemExit(
+                "Fetched buildings do not overlap the validation area. "
+                f"target_crs={validation.target_crs}; area_bounds={validation.area_bounds}; "
+                f"building_bounds={validation.source_bounds}; "
+                "check --validate-area/--validate-area-crs and fetch bounds/CRS."
+            )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

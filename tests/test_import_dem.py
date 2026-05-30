@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 
 import rasterio
+import geopandas as gpd
+from shapely.geometry import box
 
 
 def test_import_dem_cli_copies_and_writes_sidecar(tmp_path):
@@ -103,3 +105,32 @@ def test_import_dem_cli_updates_registry_dem_datasets(tmp_path):
 
     with rasterio.open(output) as dataset:
         assert entry["shape"] == [dataset.height, dataset.width]
+
+
+def test_import_dem_cli_validate_area_fails_when_no_overlap(tmp_path):
+    source = Path("data/sample/dem.tif").resolve()
+    output = tmp_path / "validated_dem.tif"
+    area_path = tmp_path / "far_area.geojson"
+    gpd.GeoDataFrame({"id": [1]}, geometry=[box(2000.0, 2000.0, 2100.0, 2100.0)], crs="EPSG:5179").to_file(
+        area_path,
+        driver="GeoJSON",
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(Path("scripts") / "import_dem.py"),
+            "--source",
+            str(source),
+            "--out",
+            str(output),
+            "--validate-area",
+            str(area_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode != 0
+    assert "Imported DEM does not overlap the validation area" in completed.stderr

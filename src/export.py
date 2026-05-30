@@ -122,9 +122,50 @@ def export_summary(summary: dict[str, Any], out_path: Path) -> Path:
     return summary_path
 
 
-def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
+def _preview_module_paths(summary: dict[str, Any], module_paths: dict[str, str] | None) -> dict[str, str]:
+    paths = {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js",
+        "orbit_controls": "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/controls/OrbitControls.js",
+        "stl_loader": "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/loaders/STLLoader.js",
+    }
+    options = summary.get("options") if isinstance(summary, dict) else None
+    if isinstance(options, dict):
+        preview_assets = options.get("preview_assets")
+        if isinstance(preview_assets, dict):
+            for key in paths:
+                value = preview_assets.get(key)
+                if isinstance(value, str) and value.strip():
+                    paths[key] = value.strip()
+    if module_paths:
+        for key in paths:
+            value = module_paths.get(key)
+            if isinstance(value, str) and value.strip():
+                paths[key] = value.strip()
+    return paths
+
+
+def export_preview_html(
+    stl_path: Path,
+    summary: dict[str, Any],
+    module_paths: dict[str, str] | None = None,
+) -> Path:
     preview_path = stl_path.with_name(f"{stl_path.stem}_preview.html")
     stl_base64 = base64.b64encode(stl_path.read_bytes()).decode("ascii")
+    outputs = summary.get("outputs", {}) if isinstance(summary, dict) else {}
+    terrain_stl_base64 = ""
+    buildings_stl_base64 = ""
+    if isinstance(outputs, dict):
+        terrain_path_value = outputs.get("terrain_stl")
+        buildings_path_value = outputs.get("buildings_stl")
+        if isinstance(terrain_path_value, str):
+            terrain_path = Path(terrain_path_value)
+            if terrain_path.exists():
+                terrain_stl_base64 = base64.b64encode(terrain_path.read_bytes()).decode("ascii")
+        if isinstance(buildings_path_value, str):
+            buildings_path = Path(buildings_path_value)
+            if buildings_path.exists():
+                buildings_stl_base64 = base64.b64encode(buildings_path.read_bytes()).decode("ascii")
+    module_path_map = _preview_module_paths(summary, module_paths)
     summary_json = (
         json.dumps(summary, indent=2)
         .replace("&", "\\u0026")
@@ -202,12 +243,14 @@ def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
   <div id="viewport"></div>
   <div id="panel"></div>
   <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js";
-    import {{ OrbitControls }} from "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/controls/OrbitControls.js";
-    import {{ STLLoader }} from "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/loaders/STLLoader.js";
+    import * as THREE from "{module_path_map["three"]}";
+    import {{ OrbitControls }} from "{module_path_map["orbit_controls"]}";
+    import {{ STLLoader }} from "{module_path_map["stl_loader"]}";
 
     const summary = {summary_json};
     const stlBase64 = "{stl_base64}";
+    const terrainStlBase64 = "{terrain_stl_base64}";
+    const buildingsStlBase64 = "{buildings_stl_base64}";
 
     function base64ToArrayBuffer(value) {{
       const binary = atob(value);
@@ -235,21 +278,50 @@ def export_preview_html(stl_path: Path, summary: dict[str, Any]) -> Path:
     scene.add(light);
 
     const loader = new STLLoader();
-    const geometry = loader.parse(base64ToArrayBuffer(stlBase64));
-    geometry.computeVertexNormals();
+    const root = new THREE.Group();
+    scene.add(root);
 
-    const material = new THREE.MeshStandardMaterial({{
-      color: 0xd8d2c4,
-      roughness: 0.85,
-      metalness: 0.0,
-    }});
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+    function addMeshFromStl(stlValue, materialOptions) {{
+      if (!stlValue) return null;
+      const geometry = loader.parse(base64ToArrayBuffer(stlValue));
+      geometry.computeVertexNormals();
+      const material = new THREE.MeshStandardMaterial(materialOptions);
+      const mesh = new THREE.Mesh(geometry, material);
+      root.add(mesh);
+      return mesh;
+    }}
 
-    const box = new THREE.Box3().setFromObject(mesh);
+    const hasSeparatedStl = Boolean(terrainStlBase64) || Boolean(buildingsStlBase64);
+    if (hasSeparatedStl) {{
+      addMeshFromStl(terrainStlBase64, {{
+        color: 0xc4a484,
+        roughness: 0.9,
+        metalness: 0.0,
+      }});
+      addMeshFromStl(buildingsStlBase64, {{
+        color: 0xbec0c8,
+        roughness: 0.65,
+        metalness: 0.05,
+      }});
+      if (root.children.length === 0) {{
+        addMeshFromStl(stlBase64, {{
+          color: 0xd8d2c4,
+          roughness: 0.85,
+          metalness: 0.0,
+        }});
+      }}
+    }} else {{
+      addMeshFromStl(stlBase64, {{
+        color: 0xd8d2c4,
+        roughness: 0.85,
+        metalness: 0.0,
+      }});
+    }}
+
+    const box = new THREE.Box3().setFromObject(root);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    mesh.position.sub(center);
+    root.position.sub(center);
 
     const maxDim = Math.max(size.x, size.y, size.z);
     camera.position.set(maxDim * 0.8, -maxDim * 1.4, maxDim * 0.8);

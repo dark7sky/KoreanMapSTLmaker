@@ -3,6 +3,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pytest
+from shapely.geometry import box
 
 from scripts import fetch_buildings
 from src.data_sources.base import Bounds
@@ -164,6 +165,42 @@ def test_fetch_buildings_cli_fixture_mode_runs_without_key(tmp_path, monkeypatch
     fetch_buildings.main()
 
     assert out_path.exists()
+
+
+def test_fetch_buildings_cli_validate_area_fails_when_no_overlap(tmp_path, monkeypatch):
+    fixture_path = tmp_path / "fixture.json"
+    fixture_path.write_text(json.dumps(_fixture_feature_collection()), encoding="utf-8")
+    area_path = tmp_path / "area.geojson"
+    gpd.GeoDataFrame(
+        {"id": [1]},
+        geometry=[box(127.0, 38.0, 127.1, 38.1)],
+        crs="EPSG:4326",
+    ).to_file(area_path, driver="GeoJSON")
+    out_path = tmp_path / "buildings.geojson"
+
+    monkeypatch.delenv("VWORLD_API_KEY", raising=False)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "fetch_buildings.py",
+            "--bounds",
+            "126",
+            "37",
+            "126.1",
+            "37.1",
+            "--out",
+            str(out_path),
+            "--fixture-response",
+            str(fixture_path),
+            "--validate-area",
+            str(area_path),
+        ],
+    )
+
+    with pytest.raises(SystemExit) as error:
+        fetch_buildings.main()
+
+    assert "Fetched buildings do not overlap the validation area" in str(error.value)
 
 
 def test_fetch_buildings_geojson_suggests_korean_and_common_field_names(tmp_path):
