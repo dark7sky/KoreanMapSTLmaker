@@ -53,7 +53,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Add nodata interpolation.
 - [x] Add smoothing.
 - [x] Add mesh decimation.
-- [ ] Add chunked processing for large areas.
+- [x] Add chunked processing for large areas.
 
 ## Phase 5 - Print-Ready STL
 
@@ -126,11 +126,11 @@ This project should evolve in phases so another agent can resume work at any poi
 
 ## Phase 12 - Optional Web Service
 
-- [ ] FastAPI backend.
+- [x] FastAPI backend.
 - [ ] Job API.
 - [ ] Upload/download endpoints.
 - [ ] React frontend.
-- [ ] Local Docker packaging.
+- [x] Local Docker packaging.
 
 ## Phase 13 - Data Acquisition Automation
 

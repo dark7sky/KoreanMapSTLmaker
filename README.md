@@ -6,7 +6,7 @@ Local tool for creating a terrain-aware 3D model from:
 - a DEM raster (`GeoTIFF`)
 - building footprints with height attributes
 
-The first target is a personal/local CLI workflow, with no web service or API dependency.
+The first target is a personal/local CLI workflow. There is also an optional local Docker/FastAPI scaffold for future service work, but the repo does not depend on it for the main build path.
 
 ## MVP Command
 
@@ -73,6 +73,12 @@ Launch the local single-page app:
 ```powershell
 .\.venv\Scripts\streamlit.exe run app\streamlit_app.py
 ```
+
+## Optional Local Web Service Scaffold
+
+See [`docs/WEB_SERVICE.md`](docs/WEB_SERVICE.md) for the containerized FastAPI run path, mount points, and environment variables.
+
+The scaffold is intentionally minimal and keeps the API surface to a health check plus a synchronous local build endpoint.
 
 Then run an end-to-end sample:
 

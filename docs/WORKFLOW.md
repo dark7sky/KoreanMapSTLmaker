@@ -203,6 +203,16 @@ Create `job.json` (same schema as one `scripts\run_batch.py` job object), then r
 
 The script prints `Cache: hit` when outputs were restored from cache, or `Cache: miss` when it rebuilt and stored a new cache entry.
 
+## 8.1 Optional Web Service Storage
+
+The optional local web service keeps each job inside the active workspace under:
+
+```text
+.web_api/jobs/<job_id>/
+```
+
+Uploaded inputs are stored under `uploads/`, generated files under `artifacts/`, and all registered paths are checked so they cannot escape the workspace or job directory.
+
 ## 9. Dataset Registry
 
 For repeated work with the same source data, maintain a dataset registry that names each DEM and building dataset and records the details needed to select it reliably.

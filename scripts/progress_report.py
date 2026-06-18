@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any
 
 
-TASK_PATTERN = re.compile(r"^- \[(?P<mark>[ xX])\] (?P<title>.+)$")
-PHASE_PATTERN = re.compile(r"^## (?P<title>.+)$")
+HEADING_PATTERN = re.compile(r"^(?P<hashes>#{2,6})\s+(?P<title>.+?)\s*$")
+TASK_PATTERN = re.compile(r"^\s*(?:[-*+]\s+|\d+\.\s+)?\[(?P<mark>[ xX])\]\s+(?P<title>.+?)\s*$")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -17,18 +17,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def summarize_plan(plan_path: Path) -> dict[str, Any]:
-    phase = "Uncategorized"
+    headings: list[tuple[int, str]] = []
     phases: dict[str, dict[str, Any]] = {}
     for line in plan_path.read_text(encoding="utf-8").splitlines():
-        phase_match = PHASE_PATTERN.match(line)
-        if phase_match:
-            phase = phase_match.group("title")
-            phases.setdefault(phase, _empty_phase())
+        heading_match = HEADING_PATTERN.match(line)
+        if heading_match:
+            level = len(heading_match.group("hashes"))
+            title = heading_match.group("title")
+            while headings and headings[-1][0] >= level:
+                headings.pop()
+            headings.append((level, title))
+            phases.setdefault(_current_phase(headings), _empty_phase())
             continue
 
         task_match = TASK_PATTERN.match(line)
         if not task_match:
             continue
+        phase = _current_phase(headings)
         phases.setdefault(phase, _empty_phase())
         done = task_match.group("mark").lower() == "x"
         phases[phase]["total"] += 1
@@ -71,6 +76,13 @@ def format_text(summary: dict[str, Any]) -> str:
 
 def _empty_phase() -> dict[str, Any]:
     return {"total": 0, "done": 0, "remaining_tasks": []}
+
+
+def _current_phase(headings: list[tuple[int, str]]) -> str:
+    for level, title in reversed(headings):
+        if level == 2:
+            return title
+    return "Uncategorized"
 
 
 def main(argv: list[str] | None = None) -> int:

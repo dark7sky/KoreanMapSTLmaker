@@ -6,3 +6,6 @@ shapely
 trimesh
 pytest
 streamlit
+# Optional web API backend:
+# fastapi
+# uvicorn

@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 .pytest_tmp/
 .pytest_tmp*/
+.web_api/
 .mypy_cache/
 .env
 .env.*
