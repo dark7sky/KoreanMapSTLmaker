@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -30,6 +31,7 @@ def validate_real_dataset(
         "buildings": _resolve_input(buildings_path),
         "dem": _resolve_input(dem_path),
     }
+    dataset_manifest = _build_dataset_manifest(inputs)
     for label, path in inputs.items():
         if path.exists():
             checks.append({"name": f"{label}_exists", "status": "pass", "message": str(path)})
@@ -37,11 +39,14 @@ def validate_real_dataset(
             checks.append({"name": f"{label}_exists", "status": "fail", "message": f"Missing file: {path}"})
             errors.append(f"{label} file does not exist: {path}")
 
+    _append_building_manifest_checks(checks, dataset_manifest["inputs"]["buildings"])
+
     if errors:
         return {
             "ok": False,
             "errors": errors,
             "inputs": {key: str(value) for key, value in inputs.items()},
+            "dataset_manifest": dataset_manifest,
             "checks": checks,
         }
 
@@ -120,6 +125,7 @@ def validate_real_dataset(
         "warnings": [item["message"] for item in warns],
         "inputs": {key: str(value) for key, value in inputs.items()},
         "target_crs": target_crs,
+        "dataset_manifest": dataset_manifest,
         "area": area_info,
         "buildings": building_info,
         "dem": dem_info,
@@ -133,6 +139,91 @@ def validate_real_dataset(
 
 def _resolve_input(path: Path) -> Path:
     return path.resolve()
+
+
+def _build_dataset_manifest(inputs: dict[str, Path]) -> dict[str, Any]:
+    return {
+        "schema": "real_dataset_validation_manifest_v1",
+        "inputs": {label: _build_file_manifest(path) for label, path in inputs.items()},
+        "notes": [
+            "Hashes identify the exact local files validated by this offline run.",
+            "For SHP building data, keep required sidecar files next to the .shp before rerunning validation.",
+        ],
+    }
+
+
+def _build_file_manifest(path: Path) -> dict[str, Any]:
+    manifest: dict[str, Any] = {
+        "path": str(path),
+        "exists": path.exists(),
+        "size_bytes": path.stat().st_size if path.exists() and path.is_file() else None,
+        "sha256": _sha256_file(path) if path.exists() and path.is_file() else None,
+    }
+    if path.suffix.lower() == ".shp":
+        manifest["sidecars"] = _build_shapefile_sidecar_manifest(path)
+    return manifest
+
+
+def _build_shapefile_sidecar_manifest(path: Path) -> dict[str, Any]:
+    required_suffixes = [".shp", ".shx", ".dbf", ".prj"]
+    optional_suffixes = [".cpg"]
+    sidecars: dict[str, Any] = {}
+    for suffix in required_suffixes + optional_suffixes:
+        sidecar = path.with_suffix(suffix)
+        sidecars[suffix] = {
+            "path": str(sidecar),
+            "required": suffix in required_suffixes,
+            "exists": sidecar.exists(),
+            "size_bytes": sidecar.stat().st_size if sidecar.exists() and sidecar.is_file() else None,
+            "sha256": _sha256_file(sidecar) if sidecar.exists() and sidecar.is_file() else None,
+        }
+    return sidecars
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _append_building_manifest_checks(checks: list[dict[str, str]], building_manifest: dict[str, Any]) -> None:
+    sidecars = building_manifest.get("sidecars")
+    if not sidecars:
+        checks.append(
+            {
+                "name": "buildings_fixture_manifest",
+                "status": "pass" if building_manifest.get("sha256") else "fail",
+                "message": f"sha256={building_manifest.get('sha256')}",
+            }
+        )
+        return
+
+    missing_required = [
+        suffix for suffix, item in sidecars.items() if item.get("required") and not item.get("exists")
+    ]
+    checks.append(
+        {
+            "name": "buildings_shp_required_sidecars",
+            "status": "pass" if not missing_required else "fail",
+            "message": "all required sidecars present"
+            if not missing_required
+            else f"missing required sidecars: {', '.join(missing_required)}",
+        }
+    )
+    missing_optional = [
+        suffix for suffix, item in sidecars.items() if not item.get("required") and not item.get("exists")
+    ]
+    checks.append(
+        {
+            "name": "buildings_shp_optional_sidecars",
+            "status": "pass" if not missing_optional else "warn",
+            "message": "all optional sidecars present"
+            if not missing_optional
+            else f"missing optional sidecars: {', '.join(missing_optional)}",
+        }
+    )
 
 
 def _append_vector_quality_checks(checks: list[dict[str, str]], label: str, vector_info: dict[str, Any]) -> None:
@@ -208,6 +299,7 @@ def main() -> None:
     parser.add_argument("--target-crs", default="EPSG:5179", help="Target CRS used for overlap checks.")
     parser.add_argument("--format", choices=("text", "json"), default="text", help="Terminal output format.")
     parser.add_argument("--json-out", type=Path, help="Optional path to save the JSON report.")
+    parser.add_argument("--manifest-out", type=Path, help="Optional path to save only the reproducibility manifest.")
     args = parser.parse_args()
 
     result = validate_real_dataset(
@@ -222,6 +314,13 @@ def main() -> None:
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
         args.json_out.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    if args.manifest_out:
+        args.manifest_out.parent.mkdir(parents=True, exist_ok=True)
+        args.manifest_out.write_text(
+            json.dumps(result["dataset_manifest"], indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
 
     if args.format == "json":
         print(json.dumps(result, indent=2, ensure_ascii=False))

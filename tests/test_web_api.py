@@ -97,9 +97,16 @@ def test_create_app_registers_routes_when_fastapi_is_available(monkeypatch):
 
     fake_fastapi = types.SimpleNamespace(
         FastAPI=FakeFastAPI,
+        File=lambda *args, **kwargs: None,
+        Form=lambda *args, **kwargs: None,
         HTTPException=type("HTTPException", (Exception,), {}),
+        UploadFile=object,
+    )
+    fake_responses = types.SimpleNamespace(
+        FileResponse=type("FileResponse", (), {}),
     )
     monkeypatch.setitem(sys.modules, "fastapi", fake_fastapi)
+    monkeypatch.setitem(sys.modules, "fastapi.responses", fake_responses)
 
     module = importlib.import_module("web_api.app")
     module = importlib.reload(module)
@@ -108,3 +115,6 @@ def test_create_app_registers_routes_when_fastapi_is_available(monkeypatch):
     assert module.app.title == "MAP Web API"
     assert ("GET", "/health", "health") in module.app.routes
     assert ("POST", "/build", "build") in module.app.routes
+    assert ("POST", "/jobs/{job_id}/uploads", "upload_file") in module.app.routes
+    assert ("GET", "/jobs/{job_id}/artifacts", "artifacts") in module.app.routes
+    assert ("GET", "/jobs/{job_id}/artifacts/{artifact_path:path}", "download_artifact") in module.app.routes

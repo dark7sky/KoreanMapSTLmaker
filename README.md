@@ -78,7 +78,8 @@ Launch the local single-page app:
 
 See [`docs/WEB_SERVICE.md`](docs/WEB_SERVICE.md) for the containerized FastAPI run path, mount points, and environment variables.
 
-The scaffold is intentionally minimal and keeps the API surface to a health check plus a synchronous local build endpoint.
+The scaffold is intentionally local-first and includes health, synchronous build/job, and workspace-local upload/artifact endpoints.
+An optional static browser console lives at `web_frontend/index.html`; open it directly after starting the web service to check `/health` and prepare or submit a `/build` JSON payload. It does not require Node or npm for tests.
 
 Then run an end-to-end sample:
 

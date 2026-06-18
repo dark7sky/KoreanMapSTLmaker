@@ -7,6 +7,7 @@ services:
     ports:
       - "${WEB_PORT:-8000}:8000"
     environment:
+      APP_WORKSPACE: ${APP_WORKSPACE:-/workspace}
       APP_DATA_DIR: ${APP_DATA_DIR:-/workspace/data}
       APP_OUTPUT_DIR: ${APP_OUTPUT_DIR:-/workspace/output}
       APP_SAMPLE_DIR: ${APP_SAMPLE_DIR:-/workspace/data/sample}

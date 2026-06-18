@@ -127,9 +127,9 @@ This project should evolve in phases so another agent can resume work at any poi
 ## Phase 12 - Optional Web Service
 
 - [x] FastAPI backend.
-- [ ] Job API.
-- [ ] Upload/download endpoints.
-- [ ] React frontend.
+- [x] Job API.
+- [x] Upload/download endpoints.
+- [x] Local static frontend.
 - [x] Local Docker packaging.
 
 ## Phase 13 - Data Acquisition Automation

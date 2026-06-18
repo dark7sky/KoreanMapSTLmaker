@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAP Web API Console</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --border: #d9dee7;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --ok: #047857;
+      --danger: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    main {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+      display: grid;
+      gap: 18px;
+    }
+
+    header,
+    section {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      background: #fff;
+      font: 13px Arial, Helvetica, sans-serif;
+    }
+
+    input,
+    select {
+      min-height: 38px;
+      padding: 8px 10px;
+    }
+
+    textarea {
+      min-height: 260px;
+      padding: 12px;
+      resize: vertical;
+      font-family: Consolas, Monaco, monospace;
+      line-height: 1.45;
+      background: #fbfcfe;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button:hover {
+      border-color: #aab3c2;
+    }
+
+    .status {
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status.ok {
+      color: var(--ok);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 780px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>MAP Web API Console</h1>
+      <p>Optional local browser page for checking the FastAPI scaffold and preparing a synchronous build request.</p>
+    </header>
+
+    <section>
+      <h2>Connection</h2>
+      <div class="grid">
+        <label>
+          API base URL
+          <input id="apiBaseInput" value="http://localhost:8000">
+        </label>
+        <label>
+          Build endpoint
+          <input id="buildEndpointInput" value="/build">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="healthButton" class="primary">Check Health</button>
+        <span id="healthStatus" class="status">Not checked.</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Build Payload</h2>
+      <div class="grid">
+        <label>
+          Area path
+          <input id="areaPathInput" value="data/sample/area.geojson">
+        </label>
+        <label>
+          Buildings path
+          <input id="buildingsPathInput" value="data/sample/buildings.geojson">
+        </label>
+        <label>
+          DEM path
+          <input id="demPathInput" value="data/sample/dem.tif">
+        </label>
+        <label>
+          Output path
+          <input id="outPathInput" value="output/model.stl">
+        </label>
+        <label>
+          Terrain resolution
+          <input id="terrainResolutionInput" value="10">
+        </label>
+        <label>
+          Building base mode
+          <select id="buildingBaseModeInput">
+            <option value="representative">representative</option>
+            <option value="min">min</option>
+            <option value="mean">mean</option>
+            <option value="min-corners">min-corners</option>
+          </select>
+        </label>
+        <label>
+          Height fields
+          <input id="heightFieldsInput" placeholder="HEIGHT,BUILD_H">
+        </label>
+        <label>
+          Floor fields
+          <input id="floorFieldsInput" placeholder="FLOORS,LEVELS">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="refreshPayloadButton">Refresh Payload</button>
+        <button id="copyPayloadButton">Copy Payload</button>
+        <button id="submitBuildButton" class="primary">Submit Build</button>
+        <span id="buildStatus" class="status">Ready.</span>
+      </div>
+      <textarea id="payloadOutput" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const apiBaseInput = document.getElementById("apiBaseInput");
+    const buildEndpointInput = document.getElementById("buildEndpointInput");
+    const healthButton = document.getElementById("healthButton");
+    const healthStatus = document.getElementById("healthStatus");
+    const areaPathInput = document.getElementById("areaPathInput");
+    const buildingsPathInput = document.getElementById("buildingsPathInput");
+    const demPathInput = document.getElementById("demPathInput");
+    const outPathInput = document.getElementById("outPathInput");
+    const terrainResolutionInput = document.getElementById("terrainResolutionInput");
+    const buildingBaseModeInput = document.getElementById("buildingBaseModeInput");
+    const heightFieldsInput = document.getElementById("heightFieldsInput");
+    const floorFieldsInput = document.getElementById("floorFieldsInput");
+    const refreshPayloadButton = document.getElementById("refreshPayloadButton");
+    const copyPayloadButton = document.getElementById("copyPayloadButton");
+    const submitBuildButton = document.getElementById("submitBuildButton");
+    const buildStatus = document.getElementById("buildStatus");
+    const payloadOutput = document.getElementById("payloadOutput");
+    const payloadInputs = [
+      areaPathInput,
+      buildingsPathInput,
+      demPathInput,
+      outPathInput,
+      terrainResolutionInput,
+      buildingBaseModeInput,
+      heightFieldsInput,
+      floorFieldsInput,
+    ];
+
+    healthButton.addEventListener("click", async () => {
+      setStatus(healthStatus, "Checking...", "");
+      try {
+        const response = await fetch(`${apiBaseInput.value.replace(/\/$/, "")}/health`);
+        const body = await response.json();
+        if (!response.ok) {
+          throw new Error(body.detail || response.statusText);
+        }
+        setStatus(healthStatus, `Healthy: ${JSON.stringify(body)}`, "ok");
+      } catch (error) {
+        setStatus(healthStatus, `Health check failed: ${error.message}`, "error");
+      }
+    });
+
+    refreshPayloadButton.addEventListener("click", updatePayload);
+
+    copyPayloadButton.addEventListener("click", async () => {
+      updatePayload();
+      await navigator.clipboard.writeText(payloadOutput.value);
+      setStatus(buildStatus, "Copied payload.", "ok");
+    });
+
+    submitBuildButton.addEventListener("click", async () => {
+      updatePayload();
+      setStatus(buildStatus, "Submitting build...", "");
+      try {
+        const response = await fetch(`${apiBaseInput.value.replace(/\/$/, "")}${buildEndpointInput.value}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: payloadOutput.value,
+        });
+        const body = await response.json();
+        if (!response.ok) {
+          throw new Error(body.detail || response.statusText);
+        }
+        setStatus(buildStatus, "Build completed.", "ok");
+        payloadOutput.value = JSON.stringify(body, null, 2);
+      } catch (error) {
+        setStatus(buildStatus, `Build failed: ${error.message}`, "error");
+      }
+    });
+
+    payloadInputs.forEach((input) => {
+      input.addEventListener("input", updatePayload);
+    });
+
+    function buildPayload() {
+      return {
+        area_path: areaPathInput.value.trim(),
+        buildings_path: buildingsPathInput.value.trim(),
+        dem_path: demPathInput.value.trim(),
+        out_path: outPathInput.value.trim(),
+        target_crs: "EPSG:5179",
+        area_crs: "",
+        building_crs: "",
+        dem_crs: "",
+        terrain_resolution: Number(terrainResolutionInput.value),
+        terrain_resampling: "nearest",
+        terrain_boundary_mode: "grid",
+        terrain_smoothing_iterations: 0,
+        terrain_smoothing_factor: 0.5,
+        interpolate_nodata: false,
+        base_thickness: 2.0,
+        default_floor_height: 3.0,
+        default_building_height: 6.0,
+        min_building_area: 4.0,
+        simplify_tolerance: 0.0,
+        model_scale: 1.0,
+        base_plate_thickness: 0.0,
+        base_plate_margin: 0.0,
+        max_area_km2: 4.0,
+        building_diagnostics_limit: 200,
+        separate: false,
+        preview: false,
+        height_fields: heightFieldsInput.value.trim(),
+        floor_fields: floorFieldsInput.value.trim(),
+        building_base_mode: buildingBaseModeInput.value,
+        export_formats: ["stl"],
+        z_scale: 1.0,
+      };
+    }
+
+    function updatePayload() {
+      payloadOutput.value = JSON.stringify(buildPayload(), null, 2);
+    }
+
+    function setStatus(element, message, state) {
+      element.textContent = message;
+      element.classList.toggle("ok", state === "ok");
+      element.classList.toggle("error", state === "error");
+    }
+
+    updatePayload();
+  </script>
+</body>
+</html>

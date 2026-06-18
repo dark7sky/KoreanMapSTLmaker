@@ -26,18 +26,41 @@ Before running `make_model.py` with real files, run the offline validation scrip
   --dem data\dem\dem.tif `
   --target-crs EPSG:5179 `
   --format text `
-  --json-out output\real_data_validation.json
+  --json-out output\real_data_validation.json `
+  --manifest-out output\real_data_manifest.json
 ```
 
 What this checks without network/API access:
 
 - required files exist and can be opened
+- reproducibility manifest with resolved file paths, sizes, and SHA-256 hashes
+- required SHP sidecars for building data: `.shp`, `.shx`, `.dbf`, `.prj`
 - area/buildings feature counts, geometry types, and CRS presence
 - likely building `height`/`floor` fields based on name matching
 - DEM CRS/bounds/size/band sanity
 - overlap of area vs buildings and area vs DEM in `--target-crs`
 
 Treat any `FAIL` as a blocker before Phase 1 model generation. `WARN` means usable but review recommended.
+
+The validation is complete only for the local files passed to the command. This repo cannot certify a real
+VWorld/Public Data download unless you point `--buildings` at that downloaded dataset and the command passes.
+
+Archive both outputs with the generated model:
+
+- `real_data_validation.json`: full machine-readable validation report
+- `real_data_manifest.json`: exact local fixture/data manifest for repeatable reruns
+
+### Real Building Data Checklist
+
+Use this checklist when preparing VWorld/GIS Building Integrated Information files:
+
+- Download file-based building data when available instead of relying on a live API call.
+- Keep all SHP sidecars in one directory: `.shp`, `.shx`, `.dbf`, `.prj`; keep `.cpg` too if provided.
+- Keep the original downloaded archive or a note with portal URL, download date, license, and query/coverage area.
+- Run `scripts\validate_real_dataset.py` against the downloaded building file, selected area, and DEM.
+- Confirm `buildings_feature_count`, `buildings_crs_present`, `buildings_geometry_type`, and `area_buildings_overlap` pass.
+- Review `buildings_height_field_candidates` and `buildings_floor_field_candidates`; pass the selected fields to `make_model.py`.
+- Save `output\real_data_validation.json` and `output\real_data_manifest.json` next to generated STL/GLTF outputs.
 
 ## Building Data
 
@@ -115,6 +138,30 @@ Notes:
 - If the downloaded DEM is another raster format, convert it to GeoTIFF in QGIS/GDAL before running `make_model.py`.
 - Keep the DEM CRS embedded in the file. A missing raster CRS is treated as an error unless a safe explicit fallback is supported by the command.
 - If small nodata holes appear inside the selected area, add `--interpolate-nodata`.
+
+Run the DEM-only offline metadata checklist before import/registration:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_real_dem.py `
+  --dem downloads\dem\ngii_dem.tif `
+  --target-crs EPSG:5179 `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --source-name "NGII/Public Data DEM" `
+  --source-date 2026-01-15 `
+  --license "Public Data Portal terms" `
+  --source-url "https://www.data.go.kr/..." `
+  --format text `
+  --json-out output\real_dem_validation.json
+```
+
+The JSON report is designed to be kept with the imported DEM. It records:
+
+- source/product/date/license/URL fields supplied on the command line
+- raster driver, CRS, bounds, shape, resolution, transform, nodata, and dtypes
+- first-band elevation min/max/mean and valid/nodata cell counts
+- pass/warn/fail checks for GeoTIFF readability, CRS, target CRS match, numeric data, nodata coverage, and optional area overlap
+- next-step guidance for reprojection, CRS repair, overlap fixes, or nodata review
 
 Register/import downloaded DEM and validate overlap:
 
