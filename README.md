@@ -18,6 +18,23 @@ python make_model.py `
   --out output/model.stl
 ```
 
+## One-Command Auto Build
+
+When `datasets.json` contains local DEM/building datasets with `coverage_bounds`, the auto builder can select the best dataset for a drawn area, validate inputs, and generate the model:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\auto_build.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --registry datasets.json `
+  --output-name my_area `
+  --export-format stl `
+  --export-format glb `
+  --preview
+```
+
+Use `--dry-run --summary-out output\auto_build_report.json` first to confirm the selected dataset and validation checks without generating a model.
+
 ## Local venv
 
 This repository is set up to run from a project-local virtual environment.
@@ -173,6 +190,7 @@ Implemented:
 - building base elevation modes: representative, min, mean
 - polygon holes are preserved during building extrusion
 - dataset command generation from registry entries (`scripts/command_from_dataset.py`)
+- one-command dataset selection, validation, and model build (`scripts/auto_build.py`)
 - DEM/building dataset index generation (`scripts/build_dataset_index.py`)
 - cached model re-run helper (`scripts/cache_model.py`)
 - master plan progress report (`scripts/progress_report.py`)

@@ -107,6 +107,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Automatic overlap selection.
 - [x] Registry-backed defaults for height/floor fields in generated commands.
 - [x] Cache generated outputs.
+- [x] One-command auto build from selected area and matching registry dataset.
 
 ## Phase 10 - Additional Formats
 

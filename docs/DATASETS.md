@@ -65,6 +65,20 @@ Print inspect/model commands for the best overlapping dataset:
   --commands
 ```
 
+Run the best overlapping dataset end to end:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\auto_build.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --registry datasets.json `
+  --output-name my_area `
+  --dry-run `
+  --summary-out output\my_area_auto_build.json
+```
+
+Remove `--dry-run` after the selected dataset and validation report look correct.
+
 The script prints two PowerShell command templates:
 
 - `scripts\inspect_data.py` with `--area`, `--buildings`, `--dem`, and optional `--area-crs` / `--building-crs`

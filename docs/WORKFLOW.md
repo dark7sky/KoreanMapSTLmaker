@@ -34,6 +34,26 @@ The area selector also creates a PowerShell command template. Update the paths i
 
 ## 3. Preflight Inspect Inputs
 
+If you already maintain a `datasets.json` registry with DEM/building coverage bounds, the quickest path is the auto builder:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\auto_build.py `
+  --area data\areas\area.geojson `
+  --area-crs EPSG:4326 `
+  --registry datasets.json `
+  --output-name my_area `
+  --terrain-resolution 10 `
+  --terrain-boundary-mode polygon `
+  --export-format stl `
+  --export-format glb `
+  --preview `
+  --summary-out output\my_area_auto_build.json
+```
+
+Start with `--dry-run` to select the best overlapping dataset and run validation without creating geometry. If validation passes, remove `--dry-run` and rerun the same command. The auto builder writes the selected dataset, validation report, equivalent `make_model.py` command, and build summary into the JSON report.
+
+Use the manual inspect/build steps below when you are preparing a new dataset, debugging CRS/overlap problems, or running without a registry.
+
 Run `scripts\inspect_data.py` before generating the model, especially when you are using newly downloaded data or a freshly drawn area. The area selector command is for `make_model.py`; use the same paths in this inspect command first so path, CRS, and overlap issues show up before a longer STL run.
 
 Run:
