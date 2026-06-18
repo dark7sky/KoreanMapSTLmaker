@@ -1,0 +1,19 @@
+{
+  "datasets": [
+    {
+      "name": "sample_block",
+      "area": "data/sample/area.geojson",
+      "dem": "data/sample/dem.tif",
+      "buildings": "data/sample/buildings.geojson",
+      "target_crs": "EPSG:5179",
+      "height_fields": ["HEIGHT"],
+      "floor_fields": ["GRND_FLR"],
+      "building_base_mode": "representative",
+      "coverage_bounds": [970.0, 970.0, 1130.0, 1130.0],
+      "source_date": "sample",
+      "license": "project fixture",
+      "source_url": "local:data/sample",
+      "notes": "Small committed fixture for trying scripts/auto_build.py without preparing external GIS data."
+    }
+  ]
+}

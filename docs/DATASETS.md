@@ -28,6 +28,15 @@ Example `datasets.json` at the project root:
 }
 ```
 
+This repository also includes `datasets.sample.json`, a ready-to-run registry for the committed sample area, DEM, and building fixture. Use it to test the registry and auto-build workflow before preparing real data:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\auto_build.py `
+  --area data\sample\area.geojson `
+  --registry datasets.sample.json `
+  --dry-run
+```
+
 List registered datasets:
 
 ```powershell

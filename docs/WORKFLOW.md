@@ -54,6 +54,15 @@ Start with `--dry-run` to select the best overlapping dataset and run validation
 
 Use the manual inspect/build steps below when you are preparing a new dataset, debugging CRS/overlap problems, or running without a registry.
 
+For a first smoke test with committed fixtures, use `datasets.sample.json`:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\auto_build.py `
+  --area data\sample\area.geojson `
+  --registry datasets.sample.json `
+  --dry-run
+```
+
 Run `scripts\inspect_data.py` before generating the model, especially when you are using newly downloaded data or a freshly drawn area. The area selector command is for `make_model.py`; use the same paths in this inspect command first so path, CRS, and overlap issues show up before a longer STL run.
 
 Run:

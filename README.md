@@ -35,6 +35,16 @@ When `datasets.json` contains local DEM/building datasets with `coverage_bounds`
 
 Use `--dry-run --summary-out output\auto_build_report.json` first to confirm the selected dataset and validation checks without generating a model.
 
+Try the committed sample registry first:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\auto_build.py `
+  --area data\sample\area.geojson `
+  --registry datasets.sample.json `
+  --dry-run `
+  --summary-out output\sample_auto_build_report.json
+```
+
 ## Local venv
 
 This repository is set up to run from a project-local virtual environment.
