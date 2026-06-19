@@ -95,6 +95,7 @@ This project should evolve in phases so another agent can resume work at any poi
 - [x] Progress/log panel.
 - [x] STL download link.
 - [x] Preview integration.
+- [x] Auto Build GUI for area + registry workflow.
 
 ## Phase 9 - Dataset Management
 

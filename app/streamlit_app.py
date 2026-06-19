@@ -1,3 +1,4 @@
+from app.auto_build_ui import default_auto_build_values, run_auto_build_from_values
 from app.data_prep import (
     build_fetch_buildings_command,
     build_import_dem_command,
@@ -18,9 +19,101 @@ def main() -> None:
 
     st.set_page_config(page_title="KoreanMapSTLmaker", layout="centered")
     st.title("KoreanMapSTLmaker")
-    tabs = st.tabs(["Build Model", "Data Prep"])
+    tabs = st.tabs(["Auto Build", "Manual Build", "Data Prep"])
 
     with tabs[0]:
+        defaults = default_auto_build_values()
+        with st.form("auto-build-form"):
+            area_path = st.text_input("Area file", str(defaults["area_path"]))
+            registry_path = st.text_input("Dataset registry", str(defaults["registry_path"]))
+            dataset_name = st.text_input("Dataset name (optional)", str(defaults["dataset_name"]))
+            output_name = st.text_input("Output name", str(defaults["output_name"]))
+            area_crs = st.text_input("Area CRS fallback", str(defaults["area_crs"]))
+            target_crs = st.text_input("Target CRS", str(defaults["target_crs"]))
+            output_dir = st.text_input("Output folder", str(defaults["output_dir"]))
+            terrain_resolution = st.number_input(
+                "Terrain resolution (m)",
+                min_value=1.0,
+                value=float(defaults["terrain_resolution"]),
+                key="auto_terrain_resolution",
+            )
+            terrain_boundary_mode = st.selectbox(
+                "Terrain boundary",
+                ["polygon", "grid"],
+                index=["polygon", "grid"].index(str(defaults["terrain_boundary_mode"])),
+            )
+            export_formats = st.multiselect(
+                "Export formats",
+                ["stl", "obj", "glb", "gltf"],
+                list(defaults["export_formats"]),
+                key="auto_export_formats",
+            )
+            preview = st.checkbox("Generate preview HTML", value=bool(defaults["preview"]))
+            dry_run = st.checkbox("Validate only (dry run)", value=bool(defaults["dry_run"]))
+            with st.expander("Advanced print/model options"):
+                interpolate_nodata = st.checkbox("Interpolate small DEM nodata holes", value=bool(defaults["interpolate_nodata"]))
+                z_scale = st.number_input("Terrain Z scale", min_value=0.01, value=float(defaults["z_scale"]))
+                model_scale = st.number_input("Model scale", min_value=0.01, value=float(defaults["model_scale"]))
+                base_plate_thickness = st.number_input(
+                    "Base plate thickness",
+                    min_value=0.0,
+                    value=float(defaults["base_plate_thickness"]),
+                )
+                base_plate_margin = st.number_input(
+                    "Base plate margin",
+                    min_value=0.0,
+                    value=float(defaults["base_plate_margin"]),
+                )
+                max_area_km2 = st.number_input("Max area (km²)", min_value=0.01, value=float(defaults["max_area_km2"]))
+            submitted = st.form_submit_button("Validate / Build")
+
+        if submitted:
+            values = {
+                **defaults,
+                "area_path": area_path,
+                "registry_path": registry_path,
+                "dataset_name": dataset_name,
+                "area_crs": area_crs,
+                "target_crs": target_crs,
+                "output_dir": output_dir,
+                "output_name": output_name,
+                "terrain_resolution": terrain_resolution,
+                "terrain_boundary_mode": terrain_boundary_mode,
+                "export_formats": export_formats,
+                "preview": preview,
+                "dry_run": dry_run,
+                "interpolate_nodata": interpolate_nodata,
+                "z_scale": z_scale,
+                "model_scale": model_scale,
+                "base_plate_thickness": base_plate_thickness,
+                "base_plate_margin": base_plate_margin,
+                "max_area_km2": max_area_km2,
+            }
+            result = run_auto_build_from_values(values)
+            if result.ok:
+                st.success(f"Auto build completed in {result.elapsed_seconds:.2f}s")
+                st.code(result.text_report or "", language="text")
+                report = result.report or {}
+                build = report.get("build")
+                if isinstance(build, dict):
+                    display = summarize_build_result(build)
+                    if display.preview is not None:
+                        st.markdown(f"[Open Preview HTML]({display.preview.uri})")
+                    if display.stl_download is not None:
+                        with open(display.stl_download.path, "rb") as fh:
+                            st.download_button(
+                                "Download STL",
+                                data=fh.read(),
+                                file_name=display.stl_download.path.name,
+                                mime="model/stl",
+                            )
+                with st.expander("Full auto-build report"):
+                    st.json(report)
+            else:
+                st.error(f"Auto build failed after {result.elapsed_seconds:.2f}s")
+                st.code(result.error or "Unknown error")
+
+    with tabs[1]:
         defaults = default_form_values()
         with st.form("build-form"):
             area_path = st.text_input("Area path", defaults["area_path"])
@@ -129,7 +222,7 @@ def main() -> None:
                 st.error(f"Build failed after {result.elapsed_seconds:.2f}s")
                 st.code(result.error or "Unknown error")
 
-    with tabs[1]:
+    with tabs[2]:
         prep_defaults = data_prep_defaults()
         st.caption("Prepare buildings/DEM inputs, then inspect overlap and CRS before model build.")
 

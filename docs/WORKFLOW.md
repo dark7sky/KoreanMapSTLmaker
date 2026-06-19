@@ -34,6 +34,14 @@ The area selector also creates a PowerShell command template. Update the paths i
 
 ## 3. Preflight Inspect Inputs
 
+For most users, launch the GUI first:
+
+```powershell
+.\.venv\Scripts\streamlit.exe run app\streamlit_app.py
+```
+
+Use the `Auto Build` tab when a dataset registry is available. It wraps the same `scripts\auto_build.py` flow described below and shows validation/build results in the browser.
+
 If you already maintain a `datasets.json` registry with DEM/building coverage bounds, the quickest path is the auto builder:
 
 ```powershell

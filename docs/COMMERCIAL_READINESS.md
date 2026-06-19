@@ -24,6 +24,22 @@ The release check verifies:
 - `scripts\auto_build.py` can validate the sample registry
 - pytest passes, unless `--skip-tests` is used
 
+## GUI Readiness
+
+Commercial users should start from the Streamlit GUI, not from raw CLI commands:
+
+```powershell
+.\.venv\Scripts\streamlit.exe run app\streamlit_app.py
+```
+
+The GUI exposes:
+
+- `Auto Build` for area + registry based validation/build
+- `Manual Build` for advanced path and field control
+- `Data Prep` for command generation around fetch/import/inspect workflows
+
+Before a paid release, run at least one real dataset through `Auto Build` with `Validate only` enabled, then rerun with model generation enabled and verify STL download plus preview output.
+
 ## Product Requirements Before Public Sale
 
 - Choose and write an explicit software license or commercial EULA.

@@ -96,11 +96,13 @@ Or run the full sample workflow:
 
 ## Local Streamlit App (Scaffold)
 
-Launch the local single-page app:
+Launch the local GUI:
 
 ```powershell
 .\.venv\Scripts\streamlit.exe run app\streamlit_app.py
 ```
+
+The first tab is `Auto Build`: choose an area file and dataset registry, validate the selected local data, then build/download STL from the same screen. `Manual Build` keeps the lower-level path controls for advanced troubleshooting.
 
 ## Optional Local Web Service Scaffold
 
