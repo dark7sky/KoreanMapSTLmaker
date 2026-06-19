@@ -34,6 +34,7 @@ When `datasets.json` contains local DEM/building datasets with `coverage_bounds`
 ```
 
 Use `--dry-run --summary-out output\auto_build_report.json` first to confirm the selected dataset and validation checks without generating a model.
+The terminal output is a short text summary by default; add `--format json` when another program needs the full report on stdout.
 
 Try the committed sample registry first:
 
@@ -236,6 +237,7 @@ The preview panel also shows a compact summary and clickable local links for gen
 ## Master Backlog
 
 See `docs/MASTER_PLAN.md`.
+See `docs/COMMERCIAL_READINESS.md` before packaging or publishing the tool commercially.
 
 Show current backlog progress:
 

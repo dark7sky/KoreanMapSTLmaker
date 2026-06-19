@@ -47,6 +47,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-area-km2", type=float, default=4.0, help="Safety limit for selected area.")
     parser.add_argument("--dry-run", action="store_true", help="Select and validate, but do not generate the model.")
     parser.add_argument("--force", action="store_true", help="Build even when validation has FAIL checks.")
+    parser.add_argument("--format", choices=("text", "json"), default="text", help="Terminal output format.")
     parser.add_argument("--summary-out", type=Path, help="Write auto-build report JSON.")
     return parser.parse_args(argv)
 
@@ -230,6 +231,47 @@ def build_powershell_command(job: dict[str, Any]) -> str:
     return to_powershell_command([str(part) for part in parts])
 
 
+def format_text_report(report: dict[str, Any]) -> str:
+    lines = [
+        f"Status: {report['status']}",
+        f"Dataset: {report['dataset']['name']}",
+        f"Dry run: {report['dry_run']}",
+    ]
+    selection = report.get("selection", {})
+    if selection.get("mode") == "overlap":
+        match = selection.get("best_match", {})
+        ratio = float(match.get("area_overlap_ratio", 0.0)) * 100.0
+        lines.append(f"Area coverage: {ratio:.1f}%")
+    validation = report.get("validation", {})
+    lines.append(f"Validation: {'PASS' if validation.get('ok') else 'FAIL'}")
+    errors = validation.get("errors") or []
+    if errors:
+        lines.append("Validation errors:")
+        for error in errors[:5]:
+            lines.append(f"  - {error}")
+        if len(errors) > 5:
+            lines.append(f"  - ... {len(errors) - 5} more")
+
+    build = report.get("build")
+    if isinstance(build, dict):
+        outputs = build.get("outputs")
+        if isinstance(outputs, dict) and outputs:
+            lines.append("Outputs:")
+            for label, path in outputs.items():
+                lines.append(f"  - {label}: {path}")
+        elif build.get("output"):
+            lines.append(f"Output: {build['output']}")
+        if build.get("preview"):
+            lines.append(f"Preview: {build['preview']}")
+        if build.get("summary"):
+            lines.append(f"Model summary: {build['summary']}")
+    else:
+        lines.append("Build: not run")
+
+    lines.extend(["Equivalent make_model.py command:", report["command"]])
+    return "\n".join(lines)
+
+
 def _choose_dataset(
     *,
     registry: dict[str, Any],
@@ -297,7 +339,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.summary_out:
         args.summary_out.parent.mkdir(parents=True, exist_ok=True)
         args.summary_out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    if args.format == "json":
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(format_text_report(report))
     return 0 if report["status"] in {"validated", "built"} else 1
 
 

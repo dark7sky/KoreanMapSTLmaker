@@ -87,6 +87,7 @@ Run the best overlapping dataset end to end:
 ```
 
 Remove `--dry-run` after the selected dataset and validation report look correct.
+Use `--format json` only when you want the full report on stdout; otherwise the command prints a compact text summary and stores JSON through `--summary-out`.
 
 The script prints two PowerShell command templates:
 

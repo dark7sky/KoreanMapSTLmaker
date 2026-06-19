@@ -122,3 +122,45 @@ def test_auto_build_cli_writes_summary_for_dry_run(tmp_path):
     saved = json.loads(summary_path.read_text(encoding="utf-8"))
     assert saved["status"] == "validated"
     assert saved["dataset"]["name"] == "sample_auto"
+
+
+def test_format_text_report_summarizes_dry_run():
+    report = {
+        "status": "validated",
+        "dry_run": True,
+        "dataset": {"name": "sample_auto"},
+        "selection": {"mode": "overlap", "best_match": {"area_overlap_ratio": 1.0}},
+        "validation": {"ok": True, "errors": []},
+        "build": None,
+        "command": "python make_model.py --area area.geojson",
+    }
+
+    text = auto_build.format_text_report(report)
+
+    assert "Status: validated" in text
+    assert "Dataset: sample_auto" in text
+    assert "Validation: PASS" in text
+    assert "Build: not run" in text
+    assert "python make_model.py" in text
+
+
+def test_format_text_report_lists_build_outputs():
+    report = {
+        "status": "built",
+        "dry_run": False,
+        "dataset": {"name": "sample_auto"},
+        "selection": {"mode": "named"},
+        "validation": {"ok": True, "errors": []},
+        "build": {
+            "outputs": {"stl": "output/model.stl", "glb": "output/model.glb"},
+            "preview": "output/model_preview.html",
+            "summary": "output/model_summary.json",
+        },
+        "command": "python make_model.py --area area.geojson",
+    }
+
+    text = auto_build.format_text_report(report)
+
+    assert "Outputs:" in text
+    assert "stl: output/model.stl" in text
+    assert "Preview: output/model_preview.html" in text

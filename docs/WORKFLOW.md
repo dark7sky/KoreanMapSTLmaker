@@ -51,6 +51,7 @@ If you already maintain a `datasets.json` registry with DEM/building coverage bo
 ```
 
 Start with `--dry-run` to select the best overlapping dataset and run validation without creating geometry. If validation passes, remove `--dry-run` and rerun the same command. The auto builder writes the selected dataset, validation report, equivalent `make_model.py` command, and build summary into the JSON report.
+Terminal output is human-readable by default. Use `--format json` for machine-readable stdout; `--summary-out` always writes the full JSON report.
 
 Use the manual inspect/build steps below when you are preparing a new dataset, debugging CRS/overlap problems, or running without a registry.
 
