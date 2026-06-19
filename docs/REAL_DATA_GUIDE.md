@@ -50,6 +50,15 @@ Archive both outputs with the generated model:
 - `real_data_validation.json`: full machine-readable validation report
 - `real_data_manifest.json`: exact local fixture/data manifest for repeatable reruns
 
+When both building/area/DEM validation and DEM-only validation pass on non-sample external files, write final acceptance evidence:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\real_data_acceptance.py `
+  --dataset-report output\real_data_validation.json `
+  --dem-report output\real_dem_validation.json `
+  --out output\real_data_acceptance.json
+```
+
 ### Real Building Data Checklist
 
 Use this checklist when preparing VWorld/GIS Building Integrated Information files:

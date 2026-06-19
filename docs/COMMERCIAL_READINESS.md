@@ -22,6 +22,7 @@ The release check verifies:
 - the master plan has only the two external real-data validation items remaining
 - `datasets.sample.json` points to existing sample files
 - `scripts\auto_build.py` can validate the sample registry
+- optional `output\real_data_acceptance.json` evidence is valid when present
 - pytest passes, unless `--skip-tests` is used
 
 ## GUI Readiness
@@ -39,6 +40,34 @@ The GUI exposes:
 - `Data Prep` for command generation around fetch/import/inspect workflows
 
 Before a paid release, run at least one real dataset through `Auto Build` with `Validate only` enabled, then rerun with model generation enabled and verify STL download plus preview output.
+
+## Final Real-Data Acceptance
+
+The last two master-plan items should only be closed after validating non-sample external data. Generate the reports:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\validate_real_dataset.py `
+  --area data\areas\real_area.geojson `
+  --buildings data\buildings\real_buildings.shp `
+  --dem data\dem\real_dem.tif `
+  --json-out output\real_dataset_validation.json
+
+.\.venv\Scripts\python.exe scripts\validate_real_dem.py `
+  --dem data\dem\real_dem.tif `
+  --area data\areas\real_area.geojson `
+  --json-out output\real_dem_validation.json
+```
+
+Then create acceptance evidence:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\real_data_acceptance.py `
+  --dataset-report output\real_dataset_validation.json `
+  --dem-report output\real_dem_validation.json `
+  --out output\real_data_acceptance.json
+```
+
+The acceptance script rejects committed sample fixture paths by default. Once `REAL_DATA_ACCEPTANCE PASS` appears, the remaining two master-plan items can be checked off with real evidence.
 
 ## Product Requirements Before Public Sale
 

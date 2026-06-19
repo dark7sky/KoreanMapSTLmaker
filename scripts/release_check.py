@@ -24,6 +24,7 @@ REQUIRED_FILES = (
     "docs/WEB_SERVICE.md",
     "docs/MASTER_PLAN.md",
 )
+ACCEPTANCE_EVIDENCE_PATH = Path("output/real_data_acceptance.json")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -39,6 +40,7 @@ def run_release_checks(*, run_tests: bool = True) -> dict[str, Any]:
     checks.append(_progress_check())
     checks.append(_sample_registry_check())
     checks.append(_sample_auto_build_check())
+    checks.append(_real_data_acceptance_evidence_check())
     if run_tests:
         checks.append(_pytest_check())
     passed = all(check["passed"] for check in checks)
@@ -113,6 +115,37 @@ def _sample_auto_build_check() -> dict[str, Any]:
         "passed": report["status"] == "validated" and report["validation"]["ok"] is True,
         "message": f"status={report['status']}; dataset={report['dataset']['name']}",
         "details": report["validation"].get("errors", []),
+    }
+
+
+def _real_data_acceptance_evidence_check() -> dict[str, Any]:
+    if not ACCEPTANCE_EVIDENCE_PATH.exists():
+        return {
+            "name": "real_data_acceptance_evidence",
+            "passed": True,
+            "message": "not present; final 2 master-plan items still require external real data",
+            "details": [],
+        }
+    try:
+        payload = json.loads(ACCEPTANCE_EVIDENCE_PATH.read_text(encoding="utf-8-sig"))
+    except Exception as exc:
+        return {
+            "name": "real_data_acceptance_evidence",
+            "passed": False,
+            "message": f"could not read evidence: {exc}",
+            "details": [],
+        }
+    checks = payload.get("checks", [])
+    failed = [
+        f"{check.get('name')}: {check.get('message')}"
+        for check in checks
+        if isinstance(check, dict) and not check.get("passed")
+    ]
+    return {
+        "name": "real_data_acceptance_evidence",
+        "passed": payload.get("passed") is True,
+        "message": "real-data evidence accepted" if payload.get("passed") is True else "real-data evidence failed",
+        "details": failed,
     }
 
 
