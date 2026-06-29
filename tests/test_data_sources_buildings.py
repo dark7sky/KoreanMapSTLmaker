@@ -7,7 +7,7 @@ from shapely.geometry import box
 
 from scripts import fetch_buildings
 from src.data_sources.base import Bounds
-from src.data_sources.buildings import build_cache_key, fetch_buildings_geojson
+from src.data_sources.buildings import build_cache_key, fetch_buildings_geojson, redact_request_url
 from src.data_sources.vworld import VWorldGISBuildingProvider
 
 
@@ -37,6 +37,23 @@ def test_vworld_request_url_contains_key_bbox_and_crs():
     assert "data=CUSTOM_LAYER" in url
     assert "BBOX%28126.0%2C37.0%2C126.1%2C37.1%29" in url
     assert "srsName=EPSG%3A4326" in url
+
+
+def test_vworld_cache_identity_separates_data_layers():
+    first = VWorldGISBuildingProvider(api_key="secret", data_name="BUILDING_A")
+    second = VWorldGISBuildingProvider(api_key="secret", data_name="BUILDING_B")
+    bounds = Bounds(126.0, 37.0, 126.1, 37.1)
+
+    assert build_cache_key(first.cache_identity, bounds, "EPSG:4326") != build_cache_key(
+        second.cache_identity, bounds, "EPSG:4326"
+    )
+
+
+def test_request_url_redaction_hides_api_key():
+    redacted = redact_request_url("https://example.com/data?key=top-secret&data=BUILDINGS")
+
+    assert "top-secret" not in redacted
+    assert "data=BUILDINGS" in redacted
 
 
 def test_fetch_buildings_geojson_fixture_writes_geojson_metadata_and_cache(tmp_path):

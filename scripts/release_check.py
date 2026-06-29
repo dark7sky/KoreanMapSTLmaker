@@ -16,7 +16,11 @@ from scripts.progress_report import summarize_plan
 
 REQUIRED_FILES = (
     "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "requirements.txt",
+    "run_app.bat",
+    "app/quick_build.py",
     "datasets.sample.json",
     "docs/WORKFLOW.md",
     "docs/DATASETS.md",
@@ -40,6 +44,7 @@ def run_release_checks(*, run_tests: bool = True) -> dict[str, Any]:
     checks.append(_progress_check())
     checks.append(_sample_registry_check())
     checks.append(_sample_auto_build_check())
+    checks.append(_sample_model_build_check())
     checks.append(_real_data_acceptance_evidence_check())
     if run_tests:
         checks.append(_pytest_check())
@@ -115,6 +120,32 @@ def _sample_auto_build_check() -> dict[str, Any]:
         "passed": report["status"] == "validated" and report["validation"]["ok"] is True,
         "message": f"status={report['status']}; dataset={report['dataset']['name']}",
         "details": report["validation"].get("errors", []),
+    }
+
+
+def _sample_model_build_check() -> dict[str, Any]:
+    try:
+        report = auto_build(
+            area_path=Path("data/sample/area.geojson"),
+            registry_path=Path("datasets.sample.json"),
+            dataset_name="sample_block",
+            output_dir=Path("output"),
+            output_name="release_check_sample",
+            terrain_resolution=20.0,
+            terrain_boundary_mode="polygon",
+            export_formats=("stl",),
+            dry_run=False,
+        )
+    except Exception as exc:
+        return {"name": "sample_model_build", "passed": False, "message": str(exc), "details": []}
+    build = report.get("build") or {}
+    output = Path(str((build.get("outputs") or {}).get("stl", "")))
+    passed = report.get("status") == "built" and output.is_file() and output.stat().st_size > 0
+    return {
+        "name": "sample_model_build",
+        "passed": passed,
+        "message": f"status={report.get('status')}; output={output}",
+        "details": [] if passed else ["Sample STL was not created."],
     }
 
 

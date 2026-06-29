@@ -5,6 +5,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import geopandas as gpd
 
@@ -21,7 +22,8 @@ def fetch_buildings_geojson(
     fixture_response: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_key = build_cache_key(provider.name, bounds, crs)
+    provider_identity = str(getattr(provider, "cache_identity", provider.name))
+    cache_key = build_cache_key(provider_identity, bounds, crs)
     cache_path = None if cache_dir is None else cache_dir / f"{cache_key}.json"
     source = "network"
 
@@ -49,7 +51,7 @@ def fetch_buildings_geojson(
         bounds=bounds,
         cache_key=cache_key,
         source=source,
-        request_url=provider.build_request_url(bounds=bounds, crs=crs),
+        request_url=redact_request_url(provider.build_request_url(bounds=bounds, crs=crs)),
         feature_count=int(len(gdf)),
         suggested_height_fields=suggested_height_fields,
         suggested_floor_fields=suggested_floor_fields,
@@ -88,6 +90,15 @@ def build_cache_key(provider_name: str, bounds: Bounds, crs: str) -> str:
     rounded = tuple(round(value, 8) for value in bounds.as_tuple())
     raw = f"{provider_name}|{crs}|{rounded[0]}|{rounded[1]}|{rounded[2]}|{rounded[3]}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
+
+
+def redact_request_url(request_url: str) -> str:
+    parts = urlsplit(request_url)
+    query = [
+        (name, "***" if name.lower() in {"key", "api_key", "apikey"} else value)
+        for name, value in parse_qsl(parts.query, keep_blank_values=True)
+    ]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 def write_source_metadata(

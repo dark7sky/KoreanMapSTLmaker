@@ -13,6 +13,7 @@ data/raw/*
 data/dem/*
 data/buildings/*
 data/areas/*
+data/local_sessions/*
 output/*
 
 !data/raw/.gitkeep

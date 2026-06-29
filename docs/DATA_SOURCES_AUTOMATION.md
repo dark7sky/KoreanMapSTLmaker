@@ -138,6 +138,7 @@ Notes:
   --area data\areas\my_area.geojson `
   --area-crs EPSG:4326 `
   --provider vworld-gis-building `
+  --data-name your-current-building-data-id `
   --out data\buildings\my_area_buildings.geojson `
   --cache-dir .cache\data_sources `
   --validate-area data\areas\my_area.geojson `
@@ -148,6 +149,7 @@ Load key from `.env` (recommended):
 
 ```powershell
 Set-Content .env "VWORLD_API_KEY=your-issued-key"
+Add-Content .env "VWORLD_BUILDING_DATA_NAME=your-current-building-data-id"
 .\.venv\Scripts\python.exe scripts\fetch_buildings.py `
   --area data\areas\my_area.geojson `
   --area-crs EPSG:4326 `
@@ -175,6 +177,7 @@ Offline simulation without live API key (fixture response):
 Behavior notes:
 
 - Live mode requires `VWORLD_API_KEY`; missing key fails clearly.
+- Live mode also requires an explicit GIS building data ID through `--data-name` or `VWORLD_BUILDING_DATA_NAME`; no unrelated layer is assumed.
 - API key issuance and any provider account/login approval are external/manual steps.
 - Live responses are cached in `.cache\data_sources` keyed by provider+bounds+CRS.
 - The VWorld provider implementation applies paging and retry handling internally.

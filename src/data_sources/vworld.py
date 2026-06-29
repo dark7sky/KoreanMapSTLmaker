@@ -14,14 +14,22 @@ from .base import Bounds
 class VWorldGISBuildingProvider:
     api_key: str | None
     base_url: str = "https://api.vworld.kr/req/data"
-    data_name: str = "LT_C_UQ111"
+    data_name: str = ""
     page_size: int = 1000
     max_pages: int = 10
     retry_count: int = 1
     retry_sleep_seconds: float = 0.0
     name: str = "vworld-gis-building"
 
+    @property
+    def cache_identity(self) -> str:
+        return f"{self.name}:{self.data_name.strip()}"
+
     def build_request_url(self, bounds: Bounds, crs: str, page: int = 1, page_size: int | None = None) -> str:
+        if not self.data_name.strip():
+            raise ValueError(
+                "VWorld GIS building data ID is missing. Pass --data-name or set VWORLD_BUILDING_DATA_NAME."
+            )
         size = self.page_size if page_size is None else page_size
         params = {
             "service": "data",
@@ -40,6 +48,10 @@ class VWorldGISBuildingProvider:
         if not self.api_key:
             raise ValueError(
                 "VWORLD_API_KEY is missing. Set the environment variable, or pass --fixture-response for offline tests."
+            )
+        if not self.data_name.strip():
+            raise ValueError(
+                "VWorld GIS building data ID is missing. Pass --data-name or set VWORLD_BUILDING_DATA_NAME."
             )
         aggregated_features: list[dict] = []
         for page in range(1, max(self.max_pages, 1) + 1):

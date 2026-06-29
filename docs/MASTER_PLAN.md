@@ -154,3 +154,18 @@ Goal: reduce manual GIS preparation while keeping the current offline-first work
 - [x] Add CLI command `scripts/import_dem.py` for DEM registration/conversion.
 - [x] Add tests using mocked API responses and tiny raster/vector fixtures.
 - [x] Add docs for key-required online mode and keyless offline mode.
+
+## Phase 14 - Productized Local App
+
+- [x] Add a quick-build first screen for non-technical users.
+- [x] Create an area from center coordinates and physical dimensions.
+- [x] Upload DEM and building files inside the GUI.
+- [x] Run VWorld-assisted building fetch from the GUI when credentials are supplied.
+- [x] Generate a temporary dataset registry automatically.
+- [x] Build and download STL without copying terminal commands.
+- [x] Add a one-click sample model flow.
+- [x] Remove the unsafe non-building VWorld layer default.
+- [x] Pin direct dependency versions for reproducible local installs.
+- [x] Add a Windows double-click launcher.
+- [x] Add proprietary source license and third-party notice boundary.
+- [x] Add a release-gate sample STL build.

@@ -34,7 +34,7 @@ def _feature(name: str) -> dict:
 
 
 def test_build_request_url_includes_page_and_size():
-    provider = VWorldGISBuildingProvider(api_key="abc123", page_size=50)
+    provider = VWorldGISBuildingProvider(api_key="abc123", data_name="BUILDING_LAYER", page_size=50)
     bounds = Bounds(126.0, 37.0, 126.1, 37.1)
 
     url = provider.build_request_url(bounds=bounds, crs="EPSG:4326", page=3, page_size=25)
@@ -44,8 +44,15 @@ def test_build_request_url_includes_page_and_size():
     assert "key=abc123" in url
 
 
+def test_build_request_url_requires_explicit_building_data_id():
+    provider = VWorldGISBuildingProvider(api_key="abc123")
+
+    with pytest.raises(ValueError, match="building data ID"):
+        provider.build_request_url(bounds=Bounds(126.0, 37.0, 126.1, 37.1), crs="EPSG:4326")
+
+
 def test_fetch_feature_collection_aggregates_pages(monkeypatch):
-    provider = VWorldGISBuildingProvider(api_key="abc123", page_size=2, max_pages=5)
+    provider = VWorldGISBuildingProvider(api_key="abc123", data_name="BUILDING_LAYER", page_size=2, max_pages=5)
     bounds = Bounds(126.0, 37.0, 126.1, 37.1)
     urls: list[str] = []
 
@@ -72,6 +79,7 @@ def test_fetch_feature_collection_aggregates_pages(monkeypatch):
 def test_fetch_feature_collection_retries_on_urlerror(monkeypatch):
     provider = VWorldGISBuildingProvider(
         api_key="abc123",
+        data_name="BUILDING_LAYER",
         page_size=1000,
         max_pages=1,
         retry_count=1,
@@ -97,6 +105,7 @@ def test_fetch_feature_collection_retries_on_urlerror(monkeypatch):
 def test_fetch_feature_collection_raises_on_non_retryable_http_error(monkeypatch):
     provider = VWorldGISBuildingProvider(
         api_key="abc123",
+        data_name="BUILDING_LAYER",
         retry_count=3,
         retry_sleep_seconds=0.0,
     )

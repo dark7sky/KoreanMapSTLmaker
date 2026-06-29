@@ -1,12 +1,32 @@
 # Terrain Building STL
 
-Local tool for creating a terrain-aware 3D model from:
+Local desktop-style tool for creating a terrain-aware 3D model from:
 
 - an area polygon (`GeoJSON`, `SHP`, `GPKG`, etc.)
 - a DEM raster (`GeoTIFF`)
 - building footprints with height attributes
 
-The first target is a personal/local CLI workflow. There is also an optional local Docker/FastAPI scaffold for future service work, but the repo does not depend on it for the main build path.
+The primary experience is a Streamlit GUI. It creates an area from coordinates,
+accepts DEM/building uploads or an optional VWorld-assisted building fetch, runs
+validation, builds the model, and provides an STL download. CLI and optional
+FastAPI paths remain available for automation.
+
+## Quick Start
+
+After installing the local environment, double-click `run_app.bat`, or run:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
+```
+
+The `빠른 제작` tab has two complete paths:
+
+- `샘플 모델 만들기`: creates and downloads a test STL without external data.
+- Actual data: enter the center coordinate/size, upload a DEM and buildings, then click `3D 모델 만들기`.
+
+For live VWorld building fetches, supply both the issued API key and the current
+GIS building data ID shown by VWorld. The application deliberately has no
+hard-coded layer ID because unrelated VWorld layers must never be treated as buildings.
 
 ## MVP Command
 
@@ -94,7 +114,7 @@ Or run the full sample workflow:
 .\scripts\run_sample.ps1
 ```
 
-## Local Streamlit App (Scaffold)
+## Local Streamlit App
 
 Launch the local GUI:
 
@@ -102,9 +122,11 @@ Launch the local GUI:
 .\.venv\Scripts\streamlit.exe run app\streamlit_app.py
 ```
 
-The first tab is `Auto Build`: choose an area file and dataset registry, validate the selected local data, then build/download STL from the same screen. `Manual Build` keeps the lower-level path controls for advanced troubleshooting.
+The first tab is `빠른 제작`. `자동 제작` supports reusable dataset registries,
+`수동 제작` exposes lower-level controls, and `데이터 준비` retains repeatable
+CLI command generation for advanced workflows.
 
-## Optional Local Web Service Scaffold
+## Optional Local Web Service
 
 See [`docs/WEB_SERVICE.md`](docs/WEB_SERVICE.md) for the containerized FastAPI run path, mount points, and environment variables.
 
@@ -209,17 +231,16 @@ Implemented:
 - master plan progress report (`scripts/progress_report.py`)
 - Blender import helper (`scripts/blender_import.py`)
 
-MVP limitations:
+Operational boundaries:
 
 - Terrain is sampled on a regular grid.
-- Building base elevation uses a representative point by default.
+- Building base elevation uses a representative point by default and can be changed in advanced mode.
 - Large areas should use coarse terrain resolution first.
 - Z-scale changes terrain and building base elevations; building heights stay in real units.
 
-Next-stage features:
-
-- Richer mesh repair checks for non-manifold edges and degenerate faces.
-- Area overlap selection from named datasets.
+- Live VWorld calls require a valid key, the current building data ID, network access, and compliance with provider terms.
+- DEM portal login/download and API-key issuance are outside the program; local GeoTIFF upload is supported directly.
+- Commercial redistribution requires verifying the exact source-data terms for each model.
 
 ## Output
 

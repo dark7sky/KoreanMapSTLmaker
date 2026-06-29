@@ -91,6 +91,7 @@ Notes:
 - API use may require an application/key, and traffic limits may vary by provider policy.
 - For fully offline runs, skip live API fetch and use downloaded files.
 - API key issuance/login flows are external to this repo and may require separate portal approval.
+- Do not use `LT_C_UQ111` for buildings; it is not a GIS building layer. Obtain the current GIS building data ID from the VWorld API detail page.
 - After download, inspect fields with:
 
 ```powershell
@@ -107,10 +108,12 @@ Optional online-assisted fetch (key required):
 
 ```powershell
 Set-Content .env "VWORLD_API_KEY=your-issued-key"
+Add-Content .env "VWORLD_BUILDING_DATA_NAME=your-current-building-data-id"
 .\.venv\Scripts\python.exe scripts\fetch_buildings.py `
   --area data\areas\area.geojson `
   --area-crs EPSG:4326 `
   --provider vworld-gis-building `
+  --data-name your-current-building-data-id `
   --out data\buildings\area_buildings.geojson `
   --cache-dir .cache\data_sources `
   --validate-area data\areas\area.geojson `

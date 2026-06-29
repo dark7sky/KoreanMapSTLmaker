@@ -10,6 +10,7 @@ def test_release_checks_pass_without_pytest():
         "master_plan_progress",
         "sample_registry",
         "sample_auto_build",
+        "sample_model_build",
         "real_data_acceptance_evidence",
     }
 

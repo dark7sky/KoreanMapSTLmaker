@@ -22,7 +22,10 @@ def main() -> None:
     parser.add_argument("--bounds", nargs=4, type=float, metavar=("MIN_X", "MIN_Y", "MAX_X", "MAX_Y"))
     parser.add_argument("--provider", default="vworld-gis-building", choices=("vworld-gis-building",))
     parser.add_argument("--base-url", default="https://api.vworld.kr/req/data", help="Provider request base URL.")
-    parser.add_argument("--data-name", default="LT_C_UQ111", help="VWorld data layer name.")
+    parser.add_argument(
+        "--data-name",
+        help="VWorld GIS building data ID. Defaults to VWORLD_BUILDING_DATA_NAME from the environment.",
+    )
     parser.add_argument("--crs", default="EPSG:4326", help="Coordinate reference system used for request bounds.")
     parser.add_argument("--out", required=True, type=Path, help="Output GeoJSON path.")
     parser.add_argument(
@@ -51,13 +54,21 @@ def main() -> None:
         fixture_response = json.loads(args.fixture_response.read_text(encoding="utf-8"))
 
     api_key = os.environ.get("VWORLD_API_KEY")
+    data_name = args.data_name or os.environ.get("VWORLD_BUILDING_DATA_NAME") or (
+        "fixture" if fixture_response is not None else ""
+    )
     if args.provider != "vworld-gis-building":
         raise ValueError(f"Unsupported provider: {args.provider}")
-    provider = VWorldGISBuildingProvider(api_key=api_key, base_url=args.base_url, data_name=args.data_name)
+    provider = VWorldGISBuildingProvider(api_key=api_key, base_url=args.base_url, data_name=data_name)
 
     if fixture_response is None and not api_key:
         raise SystemExit(
             "VWORLD_API_KEY is required for live fetches. Set VWORLD_API_KEY or pass --fixture-response for offline mode."
+        )
+    if fixture_response is None and not data_name:
+        raise SystemExit(
+            "A VWorld GIS building data ID is required for live fetches. "
+            "Pass --data-name or set VWORLD_BUILDING_DATA_NAME."
         )
 
     result = fetch_buildings_geojson(

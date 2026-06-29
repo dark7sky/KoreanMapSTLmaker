@@ -35,6 +35,7 @@ Commercial users should start from the Streamlit GUI, not from raw CLI commands:
 
 The GUI exposes:
 
+- `빠른 제작` for coordinate-based area creation, file upload, model build, and STL download
 - `Auto Build` for area + registry based validation/build
 - `Manual Build` for advanced path and field control
 - `Data Prep` for command generation around fetch/import/inspect workflows
@@ -71,7 +72,7 @@ The acceptance script rejects committed sample fixture paths by default. Once `R
 
 ## Product Requirements Before Public Sale
 
-- Choose and write an explicit software license or commercial EULA.
+- The repository now includes a proprietary `LICENSE`; replace or expand it with counsel-reviewed customer terms before paid distribution.
 - Verify third-party Python package licenses against your intended distribution model.
 - Verify VWorld, NGII, Public Data Portal, and any other source-data licenses for commercial use.
 - Validate at least one real VWorld/GIS building dataset and one real DEM dataset, then archive the validation reports.

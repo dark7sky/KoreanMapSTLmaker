@@ -141,3 +141,18 @@ def test_fetch_buildings_cli_errors_when_key_missing_after_env_load(tmp_path, mo
         fetch_buildings.main()
 
     assert "VWORLD_API_KEY is required for live fetches" in str(error.value)
+
+
+def test_fetch_buildings_cli_errors_when_data_id_missing(tmp_path, monkeypatch):
+    out_path = tmp_path / "buildings.geojson"
+    monkeypatch.setenv("VWORLD_API_KEY", "issued-key")
+    monkeypatch.delenv("VWORLD_BUILDING_DATA_NAME", raising=False)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["fetch_buildings.py", "--bounds", "126", "37", "126.1", "37.1", "--out", str(out_path)],
+    )
+
+    with pytest.raises(SystemExit) as error:
+        fetch_buildings.main()
+
+    assert "building data ID is required" in str(error.value)
